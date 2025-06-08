@@ -4,15 +4,76 @@
   "info": {
     "singularName": "exhibition",
     "pluralName": "exhibitions",
-    "displayName": "Exhibition"
+    "displayName": "Exhibition",
+    "description": "Exhibition content type for managing art exhibitions"
   },
   "options": {
     "draftAndPublish": true
   },
   "pluginOptions": {},
   "attributes": {
-    "CONTEXT": {
-      "type": "blocks"
+    "title": {
+      "type": "string",
+      "maxLength": 255,
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "type": {
+      "type": "string",
+      "default": "Exhibition",
+      "required": false
+    },
+    "exhibitionStatus": {
+      "type": "enumeration",
+      "enum": ["current", "past", "upcoming"],
+      "required": true,
+      "default": "upcoming"
+    },
+    "startDate": {
+      "type": "date",
+      "required": true
+    },
+    "endDate": {
+      "type": "date",
+      "required": true
+    },
+    "displayDate": {
+      "type": "string",
+      "required": false,
+      "maxLength": 100
+    },
+    "mainImage": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "introduction": {
+      "type": "text",
+      "required": false
+    },
+    "description": {
+      "type": "richtext",
+      "required": false
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "location": {
+      "type": "string",
+      "maxLength": 255,
+      "required": false
     }
   }
 }
