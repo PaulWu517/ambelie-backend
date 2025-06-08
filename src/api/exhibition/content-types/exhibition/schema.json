@@ -22,16 +22,19 @@
       "targetField": "title",
       "required": true
     },
-    "type": {
+    "exhibitionType": {
       "type": "string",
       "default": "Exhibition",
-      "required": false
+      "required": true
     },
     "exhibitionStatus": {
       "type": "enumeration",
-      "enum": ["current", "past", "upcoming"],
       "required": true,
-      "default": "upcoming"
+      "default": "past",
+      "enum": [
+        "current",
+        "past"
+      ]
     },
     "startDate": {
       "type": "date",
@@ -41,15 +44,18 @@
       "type": "date",
       "required": true
     },
-    "displayDate": {
-      "type": "string",
-      "required": false,
-      "maxLength": 100
-    },
     "mainImage": {
       "type": "media",
       "multiple": false,
       "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
       "allowedTypes": [
         "images"
       ]
@@ -61,14 +67,6 @@
     "description": {
       "type": "richtext",
       "required": false
-    },
-    "images": {
-      "type": "media",
-      "multiple": true,
-      "required": false,
-      "allowedTypes": [
-        "images"
-      ]
     },
     "location": {
       "type": "string",
