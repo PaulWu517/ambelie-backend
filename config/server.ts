@@ -8,7 +8,4 @@ export default ({ env }) => ({
   webhooks: {
     populateRelations: env.bool('WEBHOOKS_POPULATE_RELATIONS', false),
   },
-  dirs: {
-    public: env('RAILWAY_VOLUME_MOUNT_PATH') || './public'
-  },
 });

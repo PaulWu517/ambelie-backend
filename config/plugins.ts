@@ -9,15 +9,19 @@ export default () => ({
       //   api_secret: process.env.CLOUDINARY_SECRET,
       // },
       
-      // 使用Railway Volume进行持久化存储 (选项2 - 推荐)
-      // 需要在Railway项目中添加Volume并挂载到 /app/public/uploads
+      // 使用Railway Volume进行持久化存储
+      // Railway会将项目部署到 /app，所以 ./public/uploads 实际是 /app/public/uploads
+      provider: 'local',
       providerOptions: {
         localServer: {
           maxage: 300000
         },
       },
-      // 自定义上传路径到Volume挂载点
-      uploadPath: process.env.RAILWAY_VOLUME_MOUNT_PATH || './public/uploads',
+      actionOptions: {
+        upload: {},
+        uploadStream: {},
+        delete: {},
+      },
       sizeLimit: 200 * 1024 * 1024, // 200MB
       breakpoints: {
         xlarge: 1920,
