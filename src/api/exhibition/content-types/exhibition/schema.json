@@ -12,14 +12,13 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "title": {
+    "name": {
       "type": "string",
       "maxLength": 255,
       "required": true
     },
     "slug": {
       "type": "uid",
-      "targetField": "title",
       "required": true
     },
     "exhibitionType": {
