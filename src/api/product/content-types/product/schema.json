@@ -73,6 +73,30 @@
       "relation": "manyToOne",
       "target": "api::category.category",
       "inversedBy": "Category"
+    },
+    "price": {
+      "type": "decimal"
+    },
+    "inStock": {
+      "type": "boolean",
+      "default": true
+    },
+    "stockQuantity": {
+      "type": "integer",
+      "default": 1
+    },
+    "isInquiryOnly": {
+      "type": "boolean",
+      "default": false
+    },
+    "weight": {
+      "type": "decimal"
+    },
+    "orderItems": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order-item.order-item",
+      "mappedBy": "product"
     }
   }
 }
