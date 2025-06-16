@@ -62,12 +62,6 @@
     "origin": {
       "type": "string"
     },
-    "designer": {
-      "type": "string"
-    },
-    "maker": {
-      "type": "string"
-    },
     "category": {
       "type": "relation",
       "relation": "manyToOne",
@@ -89,8 +83,8 @@
       "type": "boolean",
       "default": false
     },
-    "weight": {
-      "type": "decimal"
+    "Materials": {
+      "type": "string"
     },
     "orderItems": {
       "type": "relation",
