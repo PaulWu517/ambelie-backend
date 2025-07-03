@@ -72,6 +72,10 @@
       "type": "string",
       "maxLength": 255,
       "required": false
+    },
+    "showOnHomepage": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
