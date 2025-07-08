@@ -75,7 +75,8 @@
     },
     "showOnHomepage": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "required": false
     }
   }
 }
