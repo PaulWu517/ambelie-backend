@@ -16,5 +16,32 @@ exports.default = {
      * This gives you an opportunity to set up your data model,
      * run jobs, or perform some special logic.
      */
-    bootstrap( /* { strapi }: { strapi: Core.Strapi } */) { },
+    async bootstrap({ strapi }) {
+        // Set upload permissions for public role
+        try {
+            const publicRole = await strapi.query('plugin::users-permissions.role').findOne({
+                where: { type: 'public' },
+            });
+            if (publicRole) {
+                await strapi.query('plugin::users-permissions.permission').updateMany({
+                    where: {
+                        role: publicRole.id,
+                        action: 'plugin::upload.content-api.find',
+                    },
+                    data: { enabled: true },
+                });
+                await strapi.query('plugin::users-permissions.permission').updateMany({
+                    where: {
+                        role: publicRole.id,
+                        action: 'plugin::upload.content-api.findOne',
+                    },
+                    data: { enabled: true },
+                });
+                console.log('✅ Upload permissions set for public role');
+            }
+        }
+        catch (error) {
+            console.error('❌ Error setting upload permissions:', error);
+        }
+    },
 };

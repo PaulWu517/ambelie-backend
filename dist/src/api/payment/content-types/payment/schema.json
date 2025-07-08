@@ -1,0 +1,75 @@
+{
+    "kind": "collectionType",
+    "collectionName": "payments",
+    "info": {
+        "singularName": "payment",
+        "pluralName": "payments",
+        "displayName": "Payment",
+        "description": "Payment records for orders"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "paymentId": {
+            "type": "string",
+            "unique": true,
+            "required": true
+        },
+        "amount": {
+            "type": "decimal",
+            "required": true
+        },
+        "currency": {
+            "type": "string",
+            "required": true,
+            "default": "USD"
+        },
+        "status": {
+            "type": "enumeration",
+            "enum": [
+                "pending",
+                "processing",
+                "succeeded",
+                "failed",
+                "cancelled",
+                "refunded"
+            ],
+            "default": "pending",
+            "required": true
+        },
+        "paymentMethod": {
+            "type": "string"
+        },
+        "provider": {
+            "type": "enumeration",
+            "enum": [
+                "stripe",
+                "paypal",
+                "alipay",
+                "wechat",
+                "manual"
+            ],
+            "required": true
+        },
+        "providerTransactionId": {
+            "type": "string"
+        },
+        "order": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::order.order",
+            "inversedBy": "payments"
+        },
+        "paymentDate": {
+            "type": "datetime"
+        },
+        "failureReason": {
+            "type": "string"
+        },
+        "metadata": {
+            "type": "json"
+        }
+    }
+}

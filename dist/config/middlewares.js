@@ -15,12 +15,16 @@ exports.default = [
                         'data:',
                         'blob:',
                         'market-assets.strapi.io',
+                        'https://ambelie-backend-production.up.railway.app',
+                        '*.railway.app',
                         process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app'
                     ],
                     'media-src': [
                         "'self'",
                         'data:',
                         'blob:',
+                        'https://ambelie-backend-production.up.railway.app',
+                        '*.railway.app',
                         process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app'
                     ],
                     upgradeInsecureRequests: null,
@@ -39,7 +43,19 @@ exports.default = [
     },
     'strapi::poweredBy',
     'strapi::query',
-    'strapi::body',
+    {
+        name: 'strapi::body',
+        config: {
+            parserOptions: {
+                jsonLimit: '10mb',
+                formLimit: '256mb', // multipart/form-data requests
+                textLimit: '10mb',
+                formidable: {
+                    maxFileSize: 200 * 1024 * 1024, // 200MB
+                },
+            },
+        },
+    },
     'strapi::session',
     'strapi::favicon',
     'strapi::public',

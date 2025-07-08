@@ -1,0 +1,25 @@
+{
+    "kind": "collectionType",
+    "collectionName": "projects",
+    "info": {
+        "singularName": "project",
+        "pluralName": "projects",
+        "displayName": "Project"
+    },
+    "options": {
+        "draftAndPublish": true
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "name": {
+            "type": "string"
+        },
+        "description": {
+            "type": "blocks"
+        },
+        "content": {
+            "type": "customField",
+            "customField": "plugin::ckeditor.CKEditor"
+        }
+    }
+}

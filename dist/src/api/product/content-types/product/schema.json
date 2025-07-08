@@ -62,17 +62,35 @@
         "origin": {
             "type": "string"
         },
-        "designer": {
-            "type": "string"
-        },
-        "maker": {
-            "type": "string"
-        },
         "category": {
             "type": "relation",
             "relation": "manyToOne",
             "target": "api::category.category",
             "inversedBy": "Category"
+        },
+        "price": {
+            "type": "decimal"
+        },
+        "inStock": {
+            "type": "boolean",
+            "default": true
+        },
+        "stockQuantity": {
+            "type": "integer",
+            "default": 1
+        },
+        "isInquiryOnly": {
+            "type": "boolean",
+            "default": false
+        },
+        "materials": {
+            "type": "string"
+        },
+        "orderItems": {
+            "type": "relation",
+            "relation": "oneToMany",
+            "target": "api::order-item.order-item",
+            "mappedBy": "product"
         }
     }
 }
