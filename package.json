@@ -15,7 +15,7 @@
     "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
   "dependencies": {
-    "@ckeditor/strapi-plugin-ckeditor": "^1.1.1",
+    "@_sh/strapi-plugin-ckeditor": "^6.0.2",
     "@strapi/plugin-cloud": "5.14.0",
     "@strapi/plugin-users-permissions": "5.14.0",
     "@strapi/strapi": "5.14.0",
