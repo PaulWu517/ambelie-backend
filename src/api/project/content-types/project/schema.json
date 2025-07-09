@@ -39,6 +39,16 @@
       "options": {
         "preset": "defaultHtml"
       }
+    },
+    "mainImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }
