@@ -14,12 +14,21 @@
         "name": {
             "type": "string"
         },
-        "description": {
-            "type": "blocks"
+        "projectType": {
+            "type": "string"
+        },
+        "startDate": {
+            "type": "date"
+        },
+        "endDate": {
+            "type": "date"
+        },
+        "introduction": {
+            "type": "string"
         },
         "content": {
             "type": "customField",
-            "customField": "plugin::ckeditor.CKEditor"
+            "customField": "plugin::ckeditor5.CKEditor"
         }
     }
 }
