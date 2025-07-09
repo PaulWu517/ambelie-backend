@@ -12,7 +12,14 @@
   "pluginOptions": {},
   "attributes": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "required": true,
+      "unique": false
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
     },
     "projectType": {
       "type": "string"
@@ -28,10 +35,7 @@
     },
     "content": {
       "type": "customField",
-      "customField": "plugin::ckeditor5.CKEditor",
-      "options": {
-        "preset": "defaultHtml"
-      }
+      "customField": "plugin::ckeditor5.CKEditor"
     }
   }
 }
