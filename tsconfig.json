@@ -9,11 +9,14 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "noEmitOnError": true,
+    "noEmitOnError": false,
     "noImplicitThis": true,
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "types": ["node", "express"],
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": [
     // Include root files
