@@ -42,6 +42,8 @@ export default {
       handler: 'payment.webhook',
       config: {
         auth: false, // Stripe webhook不需要认证
+        policies: [],
+        middlewares: [],
       },
     },
     {

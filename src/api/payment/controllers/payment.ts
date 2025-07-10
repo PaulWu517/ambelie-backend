@@ -44,10 +44,24 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
       const sig = Array.isArray(ctx.request.headers['stripe-signature']) 
         ? ctx.request.headers['stripe-signature'][0] 
         : ctx.request.headers['stripe-signature'];
-      const payload = ctx.request.body;
 
       if (!sig) {
         return ctx.badRequest('缺少Stripe签名');
+      }
+
+      // 获取原始请求体
+      let payload;
+      const requestBody = (ctx.request as any).rawBody || ctx.request.body;
+      
+      if (Buffer.isBuffer(requestBody)) {
+        // 如果是Buffer，直接使用
+        payload = requestBody;
+      } else if (typeof requestBody === 'string') {
+        // 如果是字符串，直接使用
+        payload = requestBody;
+      } else {
+        // 如果是对象，转换为JSON字符串
+        payload = JSON.stringify(requestBody);
       }
 
       // 验证webhook签名
