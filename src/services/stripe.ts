@@ -1,9 +1,20 @@
 import Stripe from 'stripe';
 
-// 初始化Stripe实例
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-});
+// 延迟初始化Stripe实例，避免在没有密钥时出错
+let stripe: Stripe | null = null;
+
+const getStripeInstance = (): Stripe => {
+  if (!stripe) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY 环境变量未设置');
+    }
+    stripe = new Stripe(secretKey, {
+      apiVersion: '2025-06-30.basil',
+    });
+  }
+  return stripe;
+};
 
 // 创建支付会话
 export const createCheckoutSession = async (params: {
@@ -35,7 +46,7 @@ export const createCheckoutSession = async (params: {
     }));
 
     // 创建checkout session
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripeInstance().checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
@@ -67,7 +78,7 @@ export const createCheckoutSession = async (params: {
 // 验证webhook签名
 export const verifyWebhookSignature = (payload: string, signature: string) => {
   try {
-    const event = stripe.webhooks.constructEvent(
+    const event = getStripeInstance().webhooks.constructEvent(
       payload,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET || ''
@@ -82,7 +93,7 @@ export const verifyWebhookSignature = (payload: string, signature: string) => {
 // 获取支付会话详情
 export const getCheckoutSession = async (sessionId: string) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    const session = await getStripeInstance().checkout.sessions.retrieve(sessionId, {
       expand: ['line_items', 'payment_intent'],
     });
     return session;
@@ -95,7 +106,7 @@ export const getCheckoutSession = async (sessionId: string) => {
 // 创建退款
 export const createRefund = async (paymentIntentId: string, amount?: number) => {
   try {
-    const refund = await stripe.refunds.create({
+    const refund = await getStripeInstance().refunds.create({
       payment_intent: paymentIntentId,
       amount: amount ? Math.round(amount * 100) : undefined, // 如果不指定金额，则全额退款
     });
@@ -106,4 +117,4 @@ export const createRefund = async (paymentIntentId: string, amount?: number) => 
   }
 };
 
-export default stripe; 
+export default getStripeInstance; 
