@@ -49,22 +49,38 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
         return ctx.badRequest('缺少Stripe签名');
       }
 
-      // 获取原始请求体
-      let payload;
-      const requestBody = (ctx.request as any).rawBody || ctx.request.body;
+      // 直接从原始请求中读取数据
+      let payload: Buffer | string;
       
-      if (Buffer.isBuffer(requestBody)) {
-        // 如果是Buffer，直接使用
-        payload = requestBody;
-      } else if (typeof requestBody === 'string') {
-        // 如果是字符串，直接使用
-        payload = requestBody;
+      if (ctx.request.body && typeof ctx.request.body === 'string') {
+        // 如果已经是字符串，直接使用
+        payload = ctx.request.body;
+      } else if (ctx.request.body && Buffer.isBuffer(ctx.request.body)) {
+        // 如果已经是Buffer，直接使用
+        payload = ctx.request.body;
       } else {
-        // 如果是对象，转换为JSON字符串
-        payload = JSON.stringify(requestBody);
+        // 从原始请求流中读取
+        payload = await new Promise<Buffer>((resolve, reject) => {
+          const chunks: Buffer[] = [];
+          
+          ctx.req.on('data', (chunk: Buffer) => {
+            chunks.push(chunk);
+          });
+          
+          ctx.req.on('end', () => {
+            resolve(Buffer.concat(chunks));
+          });
+          
+          ctx.req.on('error', reject);
+          
+          // 设置超时
+          setTimeout(() => reject(new Error('读取请求超时')), 5000);
+        });
       }
 
-      // 验证webhook签名
+      strapi.log.info(`Webhook payload type: ${typeof payload}, length: ${payload.length}`);
+
+      // 验证webhook签名（直接使用原始payload）
       const event = verifyWebhookSignature(payload, sig);
 
       // 处理不同的事件类型
