@@ -6,7 +6,8 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
   // 创建支付会话
   async createCheckoutSession(ctx) {
     try {
-      const { orderItems, customerEmail, customerName, successUrl, cancelUrl, metadata } = ctx.request.body;
+      const requestBody = ctx.request.body || {};
+      const { orderItems, customerEmail, customerName, successUrl, cancelUrl, metadata } = requestBody;
 
       // 验证必需字段
       if (!orderItems || !customerEmail || !customerName) {

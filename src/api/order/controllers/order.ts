@@ -5,20 +5,21 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
   // 创建订单
   async create(ctx) {
     try {
-      const { data } = ctx.request.body;
+      const requestData = ctx.request.body?.data || ctx.request.body;
       
-      // 生成唯一订单号
-      if (!data.orderNumber) {
-        data.orderNumber = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      }
-      
-      // 设置订单日期
-      if (!data.orderDate) {
-        data.orderDate = new Date().toISOString();
-      }
+      // 准备订单数据
+      const orderData = {
+        ...requestData,
+        // 生成唯一订单号
+        orderNumber: requestData.orderNumber || `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        // 设置订单日期
+        orderDate: requestData.orderDate || new Date().toISOString(),
+        // 确保状态有默认值
+        status: requestData.status || 'pending',
+      };
       
       const order = await strapi.entityService.create('api::order.order', {
-        data,
+        data: orderData,
         populate: ['orderItems', 'payments'],
       });
       
@@ -96,7 +97,8 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
   async updateStatus(ctx) {
     try {
       const { id } = ctx.params;
-      const { status } = ctx.request.body;
+      const requestBody = ctx.request.body;
+      const status = requestBody?.status || requestBody?.data?.status;
       
       if (!status) {
         return ctx.badRequest('缺少订单状态');
