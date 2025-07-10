@@ -46,5 +46,32 @@ export default {
         middlewares: [],
       },
     },
+    
+    // 自定义订单路由
+    {
+      method: 'GET',
+      path: '/orders/customer/:email',
+      handler: 'order.findByCustomer',
+      config: {
+        auth: false, // 允许未登录用户查看订单（通过邮箱验证）
+      },
+    },
+    {
+      method: 'PUT',
+      path: '/orders/:id/status',
+      handler: 'order.updateStatus',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
+      method: 'GET',
+      path: '/orders/number/:orderNumber',
+      handler: 'order.findByOrderNumber',
+      config: {
+        auth: false, // 允许通过订单号查看订单
+      },
+    },
   ],
 }; 
