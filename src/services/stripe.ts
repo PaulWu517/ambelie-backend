@@ -1,20 +1,16 @@
 import Stripe from 'stripe';
 
-// 延迟初始化Stripe实例，避免在没有密钥时出错
-let stripe: Stripe | null = null;
+// 检查Stripe密钥是否配置
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
-const getStripeInstance = (): Stripe => {
-  if (!stripe) {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-    if (!secretKey) {
-      throw new Error('STRIPE_SECRET_KEY 环境变量未设置');
-    }
-    stripe = new Stripe(secretKey, {
-      apiVersion: '2025-06-30.basil',
-    });
-  }
-  return stripe;
-};
+if (!stripeSecretKey) {
+  console.warn('⚠️  STRIPE_SECRET_KEY 未配置，Stripe功能将不可用');
+}
+
+// 初始化Stripe实例（如果密钥存在）
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, {
+  apiVersion: '2025-06-30.basil',
+}) : null;
 
 // 创建支付会话
 export const createCheckoutSession = async (params: {
@@ -30,6 +26,10 @@ export const createCheckoutSession = async (params: {
   cancelUrl: string;
   metadata?: Record<string, string>;
 }) => {
+  if (!stripe) {
+    throw new Error('Stripe未配置，无法创建支付会话');
+  }
+  
   try {
     const { orderItems, customerEmail, customerName, successUrl, cancelUrl, metadata } = params;
 
@@ -46,7 +46,7 @@ export const createCheckoutSession = async (params: {
     }));
 
     // 创建checkout session
-    const session = await getStripeInstance().checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
@@ -77,8 +77,12 @@ export const createCheckoutSession = async (params: {
 
 // 验证webhook签名
 export const verifyWebhookSignature = (payload: string, signature: string) => {
+  if (!stripe) {
+    throw new Error('Stripe未配置，无法验证webhook签名');
+  }
+  
   try {
-    const event = getStripeInstance().webhooks.constructEvent(
+    const event = stripe.webhooks.constructEvent(
       payload,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET || ''
@@ -92,8 +96,12 @@ export const verifyWebhookSignature = (payload: string, signature: string) => {
 
 // 获取支付会话详情
 export const getCheckoutSession = async (sessionId: string) => {
+  if (!stripe) {
+    throw new Error('Stripe未配置，无法获取支付会话详情');
+  }
+  
   try {
-    const session = await getStripeInstance().checkout.sessions.retrieve(sessionId, {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
       expand: ['line_items', 'payment_intent'],
     });
     return session;
@@ -105,8 +113,12 @@ export const getCheckoutSession = async (sessionId: string) => {
 
 // 创建退款
 export const createRefund = async (paymentIntentId: string, amount?: number) => {
+  if (!stripe) {
+    throw new Error('Stripe未配置，无法创建退款');
+  }
+  
   try {
-    const refund = await getStripeInstance().refunds.create({
+    const refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
       amount: amount ? Math.round(amount * 100) : undefined, // 如果不指定金额，则全额退款
     });
@@ -117,4 +129,4 @@ export const createRefund = async (paymentIntentId: string, amount?: number) => 
   }
 };
 
-export default getStripeInstance; 
+export default stripe; 
