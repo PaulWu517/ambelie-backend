@@ -49,33 +49,26 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
         return ctx.badRequest('缺少Stripe签名');
       }
 
-      // 直接从原始请求中读取数据
+      // 获取请求体数据
       let payload: Buffer | string;
       
+      // 尝试不同的方法获取原始请求体
       if (ctx.request.body && typeof ctx.request.body === 'string') {
-        // 如果已经是字符串，直接使用
+        // 如果是字符串，直接使用
         payload = ctx.request.body;
+        strapi.log.info('使用字符串格式的请求体');
       } else if (ctx.request.body && Buffer.isBuffer(ctx.request.body)) {
-        // 如果已经是Buffer，直接使用
+        // 如果是Buffer，直接使用
         payload = ctx.request.body;
+        strapi.log.info('使用Buffer格式的请求体');
+      } else if (ctx.request.body && typeof ctx.request.body === 'object') {
+        // 如果是对象，转换为JSON字符串
+        payload = JSON.stringify(ctx.request.body);
+        strapi.log.info('使用对象转JSON格式的请求体');
       } else {
-        // 从原始请求流中读取
-        payload = await new Promise<Buffer>((resolve, reject) => {
-          const chunks: Buffer[] = [];
-          
-          ctx.req.on('data', (chunk: Buffer) => {
-            chunks.push(chunk);
-          });
-          
-          ctx.req.on('end', () => {
-            resolve(Buffer.concat(chunks));
-          });
-          
-          ctx.req.on('error', reject);
-          
-          // 设置超时
-          setTimeout(() => reject(new Error('读取请求超时')), 5000);
-        });
+        // 最后的fallback：空字符串
+        payload = '';
+        strapi.log.warn('无法获取请求体，使用空字符串');
       }
 
       strapi.log.info(`Webhook payload type: ${typeof payload}, length: ${payload.length}`);
