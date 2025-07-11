@@ -73,12 +73,15 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
         filters: {
           customerEmail: email,
         },
+        // 暂时注释掉 populate 来进行调试
+        /*
         populate: {
           orderItems: {
             populate: ['product'],
           },
           payments: true,
         },
+        */
         sort: { createdAt: 'desc' },
       });
       
