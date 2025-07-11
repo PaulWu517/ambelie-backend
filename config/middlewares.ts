@@ -41,14 +41,12 @@ export default [
   },
   'strapi::poweredBy',
   'strapi::query',
-  // 自定义webhook中间件：在body parser之前处理原始请求体
-  'global::webhook-raw-body',
   {
     name: 'strapi::body',
     config: {
       parserOptions: {
         jsonLimit: '10mb',
-        formLimit: '256mb', // multipart/form-data requests
+        formLimit: '256mb',
         textLimit: '10mb',
         formidable: {
           maxFileSize: 200 * 1024 * 1024, // 200MB
