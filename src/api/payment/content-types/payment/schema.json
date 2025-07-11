@@ -30,7 +30,7 @@
       "type": "enumeration",
       "enum": [
         "pending",
-        "processing", 
+        "processing",
         "succeeded",
         "failed",
         "cancelled",

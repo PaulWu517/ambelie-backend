@@ -38,34 +38,83 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
     }
   },
 
-  // 处理Stripe webhook（简化调试版本）
+  // 处理Stripe webhook（按照官方文档实现）
   async webhook(ctx) {
+    let event;
+    
     try {
-      strapi.log.info('=== Webhook收到请求 ===');
-      strapi.log.info('Method:', ctx.method);
-      strapi.log.info('Path:', ctx.path);
-      strapi.log.info('Headers:', JSON.stringify(ctx.request.headers, null, 2));
-      strapi.log.info('Body type:', typeof ctx.request.body);
-      strapi.log.info('Body isBuffer:', Buffer.isBuffer(ctx.request.body));
-      strapi.log.info('Body length:', ctx.request.body ? ctx.request.body.length : 0);
+      // 获取原始payload和signature header
+      const payload = ctx.request.body;
+      const sig = ctx.request.headers['stripe-signature'];
       
-      // 检查Stripe签名是否存在
-      const signature = ctx.request.headers['stripe-signature'];
-      strapi.log.info('Stripe签名:', signature ? '存在' : '不存在');
+      strapi.log.info('Webhook收到请求');
+      strapi.log.info('Payload类型:', typeof payload);
+      strapi.log.info('Payload是Buffer:', Buffer.isBuffer(payload));
+      strapi.log.info('Payload长度:', payload ? payload.length : 0);
+      strapi.log.info('Signature存在:', !!sig);
       
-      // 检查环境变量
+      // 检查必需的参数
+      if (!payload) {
+        strapi.log.error('缺少payload');
+        return ctx.badRequest('缺少payload');
+      }
+      
+      if (!sig) {
+        strapi.log.error('缺少Stripe签名');
+        return ctx.badRequest('缺少Stripe签名');
+      }
+      
+      // 确保signature是string类型
+      const signature = Array.isArray(sig) ? sig[0] : sig;
+      if (!signature) {
+        strapi.log.error('Stripe签名格式错误');
+        return ctx.badRequest('Stripe签名格式错误');
+      }
+      
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-      strapi.log.info('Webhook密钥:', webhookSecret ? '已配置' : '未配置');
+      if (!webhookSecret) {
+        strapi.log.error('STRIPE_WEBHOOK_SECRET未配置');
+        return ctx.internalServerError('Webhook配置错误');
+      }
       
-      strapi.log.info('=== 调试信息记录完成，返回成功 ===');
+      // 验证webhook签名并构建事件对象
+      event = await verifyWebhookSignature(payload, signature);
+      strapi.log.info('Webhook签名验证成功，事件类型:', event.type);
       
-      // 直接返回成功，不做任何处理
-      return ctx.send({ received: true, debug: 'webhook received successfully' });
-    } catch (error) {
-      strapi.log.error('Webhook处理失败:', error);
-      strapi.log.error('错误堆栈:', error.stack);
-      // 即使出错也返回成功，避免500错误
-      return ctx.send({ received: true, debug: 'webhook received with error', error: error.message });
+    } catch (err) {
+      strapi.log.error('Webhook签名验证失败:', err.message);
+      return ctx.badRequest(`Webhook签名验证失败: ${err.message}`);
+    }
+    
+    // 处理事件
+    try {
+      switch (event.type) {
+        case 'checkout.session.completed':
+          strapi.log.info('处理checkout.session.completed事件');
+          await this.handleCheckoutSessionCompleted(event.data.object);
+          break;
+          
+        case 'payment_intent.succeeded':
+          strapi.log.info('处理payment_intent.succeeded事件');
+          await this.handlePaymentSucceeded(event.data.object);
+          break;
+          
+        case 'payment_intent.payment_failed':
+          strapi.log.info('处理payment_intent.payment_failed事件');
+          await this.handlePaymentFailed(event.data.object);
+          break;
+          
+        default:
+          strapi.log.info('未处理的事件类型:', event.type);
+      }
+      
+      // 返回200状态码确认收到事件
+      return ctx.send({ received: true });
+      
+    } catch (err) {
+      strapi.log.error('处理webhook事件失败:', err);
+      // 即使处理失败，也返回200避免Stripe重试
+      return ctx.send({ received: true, error: 'Event processing failed' });
     }
   },
 

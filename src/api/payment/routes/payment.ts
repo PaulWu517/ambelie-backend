@@ -44,6 +44,7 @@ export default {
         auth: false, // Stripe webhook不需要认证
         policies: [],
         middlewares: [],
+        parse: false, // 禁用body parsing，获取原始body
       },
     },
     {
