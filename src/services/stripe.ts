@@ -81,16 +81,34 @@ export const verifyWebhookSignature = (payload: string | Buffer, signature: stri
     throw new Error('Stripe未配置，无法验证webhook签名');
   }
   
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    throw new Error('STRIPE_WEBHOOK_SECRET未配置');
+  }
+  
   try {
+    strapi.log.info(`验证参数 - payload类型: ${typeof payload}, Buffer: ${Buffer.isBuffer(payload)}, 长度: ${payload.length}`);
+    strapi.log.info(`签名: ${signature}`);
+    strapi.log.info(`Webhook密钥: ${webhookSecret.substring(0, 10)}...`);
+    
     const event = stripe.webhooks.constructEvent(
       payload,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET || ''
+      webhookSecret
     );
+    
+    strapi.log.info(`签名验证成功，事件类型: ${event.type}`);
     return event;
   } catch (error) {
-    strapi.log.error('Webhook签名验证失败:', error);
-    throw new Error('Webhook签名验证失败');
+    strapi.log.error('Webhook签名验证失败:', {
+      error: error.message,
+      payloadType: typeof payload,
+      payloadLength: payload ? payload.length : 0,
+      isBuffer: Buffer.isBuffer(payload),
+      signature: signature,
+      webhookSecretPrefix: webhookSecret.substring(0, 10)
+    });
+    throw new Error(`Webhook签名验证失败: ${error.message}`);
   }
 };
 

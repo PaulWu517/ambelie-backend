@@ -41,6 +41,8 @@ export default [
   },
   'strapi::poweredBy',
   'strapi::query',
+  // 自定义webhook中间件：在body parser之前处理原始请求体
+  'global::webhook-raw-body',
   {
     name: 'strapi::body',
     config: {
