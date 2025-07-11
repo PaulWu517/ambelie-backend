@@ -13,12 +13,12 @@ export default ({ env }) => {
           connectionString: env('DATABASE_URL'),
           ssl: {
             rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', false),
-          },
         },
+      },
         pool: {
           min: env.int('DATABASE_POOL_MIN', 2),
           max: env.int('DATABASE_POOL_MAX', 5),
-        },
+    },
         acquireConnectionTimeout: env.int('DATABASE_CONNECTION_TIMEOUT', 30000),
         debug: false,
       },
