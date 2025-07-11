@@ -38,54 +38,34 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
     }
   },
 
-  // 处理Stripe webhook
+  // 处理Stripe webhook（简化调试版本）
   async webhook(ctx) {
     try {
-      const sig = Array.isArray(ctx.request.headers['stripe-signature']) 
-        ? ctx.request.headers['stripe-signature'][0] 
-        : ctx.request.headers['stripe-signature'];
-
-      if (!sig) {
-        strapi.log.error('缺少Stripe签名');
-        return ctx.badRequest('缺少Stripe签名');
-      }
-
-      // 获取原始请求体（由自定义中间件提供）
-      const payload = ctx.request.body;
+      strapi.log.info('=== Webhook收到请求 ===');
+      strapi.log.info('Method:', ctx.method);
+      strapi.log.info('Path:', ctx.path);
+      strapi.log.info('Headers:', JSON.stringify(ctx.request.headers, null, 2));
+      strapi.log.info('Body type:', typeof ctx.request.body);
+      strapi.log.info('Body isBuffer:', Buffer.isBuffer(ctx.request.body));
+      strapi.log.info('Body length:', ctx.request.body ? ctx.request.body.length : 0);
       
-      strapi.log.info(`Webhook payload type: ${typeof payload}, isBuffer: ${Buffer.isBuffer(payload)}, length: ${payload ? payload.length : 0}`);
+      // 检查Stripe签名是否存在
+      const signature = ctx.request.headers['stripe-signature'];
+      strapi.log.info('Stripe签名:', signature ? '存在' : '不存在');
       
-      if (!payload) {
-        strapi.log.error('请求体为空');
-        return ctx.badRequest('请求体为空');
-      }
-
-      // 验证webhook签名
-      strapi.log.info('开始验证Stripe webhook签名...');
-      const event = verifyWebhookSignature(payload, sig);
-
-      strapi.log.info(`收到Stripe webhook事件: ${event.type}, ID: ${event.id}`);
-
-      // 处理不同的事件类型
-      switch (event.type) {
-        case 'checkout.session.completed':
-          await this.handleCheckoutSessionCompleted(event.data.object as any);
-          break;
-        case 'payment_intent.succeeded':
-          await this.handlePaymentSucceeded(event.data.object as any);
-          break;
-        case 'payment_intent.payment_failed':
-          await this.handlePaymentFailed(event.data.object as any);
-          break;
-        default:
-          strapi.log.info(`未处理的事件类型: ${event.type}`);
-      }
-
-      return ctx.send({ received: true });
+      // 检查环境变量
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      strapi.log.info('Webhook密钥:', webhookSecret ? '已配置' : '未配置');
+      
+      strapi.log.info('=== 调试信息记录完成，返回成功 ===');
+      
+      // 直接返回成功，不做任何处理
+      return ctx.send({ received: true, debug: 'webhook received successfully' });
     } catch (error) {
       strapi.log.error('Webhook处理失败:', error);
-      // 返回更详细的错误信息用于调试
-      return ctx.badRequest(`Webhook处理失败: ${error.message}`);
+      strapi.log.error('错误堆栈:', error.stack);
+      // 即使出错也返回成功，避免500错误
+      return ctx.send({ received: true, debug: 'webhook received with error', error: error.message });
     }
   },
 
