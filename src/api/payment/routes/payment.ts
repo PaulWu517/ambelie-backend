@@ -44,8 +44,7 @@ export default {
         auth: false, // Stripe webhook不需要认证
         policies: [],
         middlewares: [],
-        // 完全跳过 Strapi 的请求体解析
-        parse: false,
+        parse: false, // 不解析请求体，保持原始格式用于签名验证
       },
     },
     {
