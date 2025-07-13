@@ -31,7 +31,7 @@ export default {
       // 'zh',
     ],
     
-    // 添加自定义配置
+    // 添加自定义翻译
     translations: {
       zh: {
         'Order': '订单',
@@ -59,24 +59,11 @@ export default {
     },
   },
   register(app: StrapiApp) {
-    // 注册订单状态组件
-    app.addComponents({
-      OrderStatusBadge: () => import('./components/OrderStatusBadge')
-    });
+    // 注册自定义插件或组件
+    console.log('Admin app registered', app);
   },
   bootstrap(app: StrapiApp) {
-    // 配置订单管理界面
-    app.addMenuLink({
-      to: '/content-manager/collectionType/api::order.order',
-      icon: 'ShoppingCart',
-      intlLabel: {
-        id: 'order.plugin.name',
-        defaultMessage: '订单管理',
-      },
-      Component: async () => {
-        const component = await import('./pages/OrderManagement');
-        return component;
-      },
-    });
+    // 启动时的配置
+    console.log('Admin app bootstrapped', app);
   },
 }; 

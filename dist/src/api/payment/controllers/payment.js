@@ -103,50 +103,85 @@ exports.default = strapi_1.factories.createCoreController('api::payment.payment'
     },
     // 处理支付会话完成
     async handleCheckoutSessionCompleted(session) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
         try {
             // 获取详细的session信息
             const fullSession = await (0, stripe_1.getCheckoutSession)(session.id);
-            // 创建或更新订单
+            // 从metadata中获取订单项信息
+            const orderItemsData = ((_a = fullSession.metadata) === null || _a === void 0 ? void 0 : _a.items) ? JSON.parse(fullSession.metadata.items) : [];
+            // 创建订单
             const orderData = {
                 orderNumber: `ORDER-${Date.now()}`,
                 status: 'paid',
                 totalAmount: (fullSession.amount_total || 0) / 100, // 转换为元
                 subtotal: (fullSession.amount_subtotal || 0) / 100,
-                currency: ((_a = fullSession.currency) === null || _a === void 0 ? void 0 : _a.toUpperCase()) || 'USD',
-                customerEmail: ((_b = fullSession.customer_details) === null || _b === void 0 ? void 0 : _b.email) || '',
-                customerName: ((_c = fullSession.customer_details) === null || _c === void 0 ? void 0 : _c.name) || '',
-                customerPhone: ((_d = fullSession.customer_details) === null || _d === void 0 ? void 0 : _d.phone) || '',
-                shippingAddress: ((_e = fullSession.shipping_details) === null || _e === void 0 ? void 0 : _e.address) || ((_f = fullSession.customer_details) === null || _f === void 0 ? void 0 : _f.address) || {},
-                billingAddress: ((_g = fullSession.customer_details) === null || _g === void 0 ? void 0 : _g.address) || {},
+                currency: ((_b = fullSession.currency) === null || _b === void 0 ? void 0 : _b.toUpperCase()) || 'USD',
+                customerEmail: ((_c = fullSession.customer_details) === null || _c === void 0 ? void 0 : _c.email) || '',
+                customerName: ((_d = fullSession.customer_details) === null || _d === void 0 ? void 0 : _d.name) || '',
+                customerPhone: ((_e = fullSession.customer_details) === null || _e === void 0 ? void 0 : _e.phone) || '',
+                shippingAddress: ((_f = fullSession.shipping_details) === null || _f === void 0 ? void 0 : _f.address) || ((_g = fullSession.customer_details) === null || _g === void 0 ? void 0 : _g.address) || {},
+                billingAddress: ((_h = fullSession.customer_details) === null || _h === void 0 ? void 0 : _h.address) || {},
                 orderDate: new Date().toISOString(),
             };
             const order = await strapi.entityService.create('api::order.order', {
                 data: orderData,
             });
+            // 创建订单项 (Order-items) - 这是之前缺少的部分
+            if (orderItemsData && orderItemsData.length > 0) {
+                for (const item of orderItemsData) {
+                    try {
+                        // 获取产品信息
+                        const product = await strapi.entityService.findOne('api::product.product', item.productId);
+                        if (product) {
+                            // 创建产品快照
+                            const productSnapshot = {
+                                id: product.id,
+                                name: product.name || '',
+                                price: product.price || 0,
+                                description: product.description || '',
+                                slug: product.slug || '',
+                            };
+                            // 创建订单项
+                            await strapi.entityService.create('api::order-item.order-item', {
+                                data: {
+                                    quantity: item.quantity || 1,
+                                    unitPrice: item.unitPrice || product.price || 0,
+                                    totalPrice: (item.quantity || 1) * (item.unitPrice || product.price || 0),
+                                    product: item.productId,
+                                    order: order.id,
+                                    productSnapshot: productSnapshot,
+                                },
+                            });
+                        }
+                    }
+                    catch (itemError) {
+                        strapi.log.error(`创建订单项失败 - ProductID: ${item.productId}`, itemError);
+                    }
+                }
+            }
             // 创建支付记录
             const paymentIntentId = typeof fullSession.payment_intent === 'string'
                 ? fullSession.payment_intent
-                : (_h = fullSession.payment_intent) === null || _h === void 0 ? void 0 : _h.id;
+                : (_j = fullSession.payment_intent) === null || _j === void 0 ? void 0 : _j.id;
             await strapi.entityService.create('api::payment.payment', {
                 data: {
                     paymentId: paymentIntentId || fullSession.id,
                     amount: (fullSession.amount_total || 0) / 100,
-                    currency: ((_j = fullSession.currency) === null || _j === void 0 ? void 0 : _j.toUpperCase()) || 'USD',
+                    currency: ((_k = fullSession.currency) === null || _k === void 0 ? void 0 : _k.toUpperCase()) || 'USD',
                     status: 'succeeded',
-                    paymentMethod: ((_k = fullSession.payment_method_types) === null || _k === void 0 ? void 0 : _k[0]) || 'card',
+                    paymentMethod: ((_l = fullSession.payment_method_types) === null || _l === void 0 ? void 0 : _l[0]) || 'card',
                     provider: 'stripe',
                     providerTransactionId: fullSession.id,
                     order: order.id,
                     paymentDate: new Date().toISOString(),
                     metadata: {
                         sessionId: session.id,
-                        customerEmail: (_l = fullSession.customer_details) === null || _l === void 0 ? void 0 : _l.email,
-                        customerName: (_m = fullSession.customer_details) === null || _m === void 0 ? void 0 : _m.name,
+                        customerEmail: (_m = fullSession.customer_details) === null || _m === void 0 ? void 0 : _m.email,
+                        customerName: (_o = fullSession.customer_details) === null || _o === void 0 ? void 0 : _o.name,
                     },
                 },
             });
-            strapi.log.info(`订单 ${order.orderNumber} 创建成功`);
+            strapi.log.info(`订单 ${order.orderNumber} 创建成功，包含 ${orderItemsData.length} 个订单项`);
         }
         catch (error) {
             strapi.log.error('处理支付会话完成事件失败:', error);
