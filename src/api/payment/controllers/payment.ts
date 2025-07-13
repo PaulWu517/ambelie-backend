@@ -40,77 +40,81 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
 
   // 处理Stripe webhook（按照官方文档实现）
   async webhook(ctx) {
-    strapi.log.info('Webhook endpoint called');
+    let event;
     
     try {
-      // 1. 获取Stripe签名
-      const signature = Array.isArray(ctx.request.headers['stripe-signature']) 
-        ? ctx.request.headers['stripe-signature'][0] 
-        : ctx.request.headers['stripe-signature'];
-      if (!signature) {
-        strapi.log.error('No Stripe signature found');
-        return ctx.badRequest('Missing Stripe signature');
-      }
-
-      // 2. 获取webhook密钥
-      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-      if (!endpointSecret) {
-        strapi.log.error('STRIPE_WEBHOOK_SECRET not configured');
-        return ctx.badRequest('Webhook secret not configured');
-      }
-
-      // 3. 读取原始请求体（关键：按照官方文档要求）
-      let payload;
+      // 获取原始payload和signature header
+      const payload = ctx.request.body;
+      const sig = ctx.request.headers['stripe-signature'];
       
-      // 由于设置了parse: false，ctx.request.body应该是原始数据
-      if (ctx.request.body) {
-        payload = ctx.request.body;
-      } else {
-        // 如果没有body，手动从请求流读取
-        const chunks = [];
-        for await (const chunk of ctx.req) {
-          chunks.push(chunk);
-        }
-        payload = Buffer.concat(chunks);
+      strapi.log.info('Webhook收到请求');
+      strapi.log.info('Payload类型:', typeof payload);
+      strapi.log.info('Payload是Buffer:', Buffer.isBuffer(payload));
+      strapi.log.info('Payload长度:', payload ? payload.length : 0);
+      strapi.log.info('Signature存在:', !!sig);
+      
+      // 检查必需的参数
+      if (!payload) {
+        strapi.log.error('缺少payload');
+        return ctx.badRequest('缺少payload');
       }
-
-      strapi.log.info(`Payload type: ${typeof payload}, isBuffer: ${Buffer.isBuffer(payload)}, length: ${payload ? payload.length : 0}`);
-
-      // 4. 验证签名并构造事件（按照官方文档）
-      let event;
-      try {
-        event = await verifyWebhookSignature(payload, signature);
-        strapi.log.info(`Event verified: ${event.type}`);
-      } catch (err) {
-        strapi.log.error('Webhook signature verification failed:', err.message);
-        return ctx.badRequest('Webhook signature verification failed');
+      
+      if (!sig) {
+        strapi.log.error('缺少Stripe签名');
+        return ctx.badRequest('缺少Stripe签名');
       }
-
-      // 5. 处理事件（按照官方文档的建议）
+      
+      // 确保signature是string类型
+      const signature = Array.isArray(sig) ? sig[0] : sig;
+      if (!signature) {
+        strapi.log.error('Stripe签名格式错误');
+        return ctx.badRequest('Stripe签名格式错误');
+      }
+      
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        strapi.log.error('STRIPE_WEBHOOK_SECRET未配置');
+        return ctx.internalServerError('Webhook配置错误');
+      }
+      
+      // 验证webhook签名并构建事件对象
+      event = await verifyWebhookSignature(payload, signature);
+      strapi.log.info('Webhook签名验证成功，事件类型:', event.type);
+      
+    } catch (err) {
+      strapi.log.error('Webhook签名验证失败:', err.message);
+      return ctx.badRequest(`Webhook签名验证失败: ${err.message}`);
+    }
+    
+    // 处理事件
+    try {
       switch (event.type) {
         case 'checkout.session.completed':
-          strapi.log.info('Processing checkout.session.completed');
+          strapi.log.info('处理checkout.session.completed事件');
           await this.handleCheckoutSessionCompleted(event.data.object);
           break;
+          
         case 'payment_intent.succeeded':
-          strapi.log.info('Processing payment_intent.succeeded');
+          strapi.log.info('处理payment_intent.succeeded事件');
           await this.handlePaymentSucceeded(event.data.object);
           break;
+          
         case 'payment_intent.payment_failed':
-          strapi.log.info('Processing payment_intent.payment_failed');
+          strapi.log.info('处理payment_intent.payment_failed事件');
           await this.handlePaymentFailed(event.data.object);
           break;
+          
         default:
-          strapi.log.info(`Unhandled event type: ${event.type}`);
+          strapi.log.info('未处理的事件类型:', event.type);
       }
-
-      // 6. 按照官方文档：快速返回成功状态码
+      
+      // 返回200状态码确认收到事件
       return ctx.send({ received: true });
-
-    } catch (error) {
-      strapi.log.error('Webhook processing error:', error);
-      // 即使出错也返回200，避免Stripe重试
-      return ctx.send({ received: true, error: 'processed with error' });
+      
+    } catch (err) {
+      strapi.log.error('处理webhook事件失败:', err);
+      // 即使处理失败，也返回200避免Stripe重试
+      return ctx.send({ received: true, error: 'Event processing failed' });
     }
   },
 
@@ -120,7 +124,10 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
       // 获取详细的session信息
       const fullSession = await getCheckoutSession(session.id);
       
-      // 创建或更新订单
+      // 从metadata中获取订单项信息
+      const orderItemsData = fullSession.metadata?.items ? JSON.parse(fullSession.metadata.items) : [];
+      
+      // 创建订单
       const orderData = {
         orderNumber: `ORDER-${Date.now()}`,
         status: 'paid' as const,
@@ -138,6 +145,41 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
       const order = await strapi.entityService.create('api::order.order', {
         data: orderData,
       });
+
+      // 创建订单项 (Order-items) - 这是之前缺少的部分
+      if (orderItemsData && orderItemsData.length > 0) {
+        for (const item of orderItemsData) {
+          try {
+            // 获取产品信息
+            const product = await strapi.entityService.findOne('api::product.product', item.productId);
+            
+            if (product) {
+              // 创建产品快照
+              const productSnapshot = {
+                id: product.id,
+                name: product.name || '',
+                price: product.price || 0,
+                description: product.description || '',
+                slug: product.slug || '',
+              };
+
+              // 创建订单项
+              await strapi.entityService.create('api::order-item.order-item', {
+                data: {
+                  quantity: item.quantity || 1,
+                  unitPrice: item.unitPrice || product.price || 0,
+                  totalPrice: (item.quantity || 1) * (item.unitPrice || product.price || 0),
+                  product: item.productId,
+                  order: order.id,
+                  productSnapshot: productSnapshot,
+                },
+              });
+            }
+          } catch (itemError) {
+            strapi.log.error(`创建订单项失败 - ProductID: ${item.productId}`, itemError);
+          }
+        }
+      }
 
       // 创建支付记录
       const paymentIntentId = typeof fullSession.payment_intent === 'string' 
@@ -163,7 +205,7 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
         },
       });
 
-      strapi.log.info(`订单 ${order.orderNumber} 创建成功`);
+      strapi.log.info(`订单 ${order.orderNumber} 创建成功，包含 ${orderItemsData.length} 个订单项`);
     } catch (error) {
       strapi.log.error('处理支付会话完成事件失败:', error);
     }

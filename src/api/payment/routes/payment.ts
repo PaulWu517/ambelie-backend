@@ -36,17 +36,7 @@ export default {
         auth: false, // 允许未登录用户创建支付会话
       },
     },
-    {
-      method: 'POST',
-      path: '/payments/webhook',
-      handler: 'payment.webhook',
-      config: {
-        auth: false, // Stripe webhook不需要认证
-        policies: [],
-        middlewares: [],
-        parse: false, // 关键：不解析请求体，保持原始格式用于签名验证
-      },
-    },
+    // webhook路由现在在bootstrap中直接处理
     {
       method: 'GET',
       path: '/payments/session/:sessionId',

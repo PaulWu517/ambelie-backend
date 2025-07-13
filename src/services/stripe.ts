@@ -75,7 +75,7 @@ export const createCheckoutSession = async (params: {
   }
 };
 
-// 验证webhook签名（按照官方文档）
+// 验证webhook签名
 export const verifyWebhookSignature = (payload: string | Buffer, signature: string) => {
   if (!stripe) {
     throw new Error('Stripe未配置，无法验证webhook签名');
@@ -87,17 +87,30 @@ export const verifyWebhookSignature = (payload: string | Buffer, signature: stri
   }
   
   try {
-    // 使用Stripe官方推荐的方法
+    strapi.log.info(`验证webhook签名`);
+    strapi.log.info(`Payload类型: ${typeof payload}, 是Buffer: ${Buffer.isBuffer(payload)}, 长度: ${payload.length}`);
+    strapi.log.info(`签名: ${signature}`);
+    strapi.log.info(`Webhook密钥前缀: ${webhookSecret.substring(0, 10)}...`);
+    
+    // 使用Stripe官方推荐的方法验证签名
     const event = stripe.webhooks.constructEvent(
       payload,
       signature,
       webhookSecret
     );
     
+    strapi.log.info(`Webhook签名验证成功，事件类型: ${event.type}, 事件ID: ${event.id}`);
     return event;
   } catch (error) {
-    strapi.log.error('Webhook signature verification failed:', error.message);
-    throw error;
+    strapi.log.error('Webhook签名验证失败:', {
+      error: error.message,
+      payloadType: typeof payload,
+      payloadLength: payload ? payload.length : 0,
+      isBuffer: Buffer.isBuffer(payload),
+      signature: signature,
+      webhookSecretPrefix: webhookSecret.substring(0, 10) + '...'
+    });
+    throw new Error(`Webhook签名验证失败: ${error.message}`);
   }
 };
 

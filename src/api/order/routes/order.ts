@@ -73,5 +73,29 @@ export default {
         auth: false, // 允许通过订单号查看订单
       },
     },
+    {
+      method: 'POST',
+      path: '/orders/:id/cancel',
+      handler: 'order.cancelOrder',
+      config: {
+        auth: false, // 允许客户取消订单
+      },
+    },
+    {
+      method: 'PUT',
+      path: '/orders/:id/modify',
+      handler: 'order.modifyOrder',
+      config: {
+        auth: false, // 允许客户修改订单
+      },
+    },
+    {
+      method: 'POST',
+      path: '/orders/:id/refund',
+      handler: 'order.requestRefund',
+      config: {
+        auth: false, // 允许客户申请退款
+      },
+    },
   ],
 }; 

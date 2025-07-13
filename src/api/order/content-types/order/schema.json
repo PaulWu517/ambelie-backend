@@ -21,12 +21,15 @@
       "type": "enumeration",
       "enum": [
         "pending",
+        "confirmed",
         "paid", 
         "processing",
         "shipped",
+        "out_for_delivery",
         "delivered",
         "completed",
-        "cancelled"
+        "cancelled",
+        "refunded"
       ],
       "default": "pending",
       "required": true
@@ -98,6 +101,30 @@
       "type": "string"
     },
     "shippingMethod": {
+      "type": "string"
+    },
+    "estimatedDeliveryDate": {
+      "type": "datetime"
+    },
+    "carrier": {
+      "type": "enumeration",
+      "enum": [
+        "ups",
+        "fedex",
+        "dhl",
+        "usps",
+        "tnt",
+        "dpex",
+        "aramex",
+        "sf_express",
+        "china_post",
+        "other"
+      ]
+    },
+    "carrierName": {
+      "type": "string"
+    },
+    "trackingUrl": {
       "type": "string"
     }
   }

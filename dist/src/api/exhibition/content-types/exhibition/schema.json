@@ -1,0 +1,82 @@
+{
+    "kind": "collectionType",
+    "collectionName": "exhibitions",
+    "info": {
+        "singularName": "exhibition",
+        "pluralName": "exhibitions",
+        "displayName": "Exhibition",
+        "description": "Exhibition content type for managing art exhibitions"
+    },
+    "options": {
+        "draftAndPublish": true
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "name": {
+            "type": "string",
+            "maxLength": 255,
+            "required": true
+        },
+        "slug": {
+            "type": "uid",
+            "targetField": "name",
+            "required": true
+        },
+        "exhibitionType": {
+            "type": "string",
+            "default": "Exhibition",
+            "required": true
+        },
+        "exhibitionStatus": {
+            "type": "enumeration",
+            "required": true,
+            "default": "past",
+            "enum": [
+                "current",
+                "past"
+            ]
+        },
+        "startDate": {
+            "type": "date",
+            "required": true
+        },
+        "endDate": {
+            "type": "date",
+            "required": true
+        },
+        "mainImage": {
+            "type": "media",
+            "multiple": false,
+            "required": true,
+            "allowedTypes": [
+                "images"
+            ]
+        },
+        "images": {
+            "type": "media",
+            "multiple": true,
+            "required": false,
+            "allowedTypes": [
+                "images"
+            ]
+        },
+        "introduction": {
+            "type": "text",
+            "required": false
+        },
+        "description": {
+            "type": "richtext",
+            "required": false
+        },
+        "location": {
+            "type": "string",
+            "maxLength": 255,
+            "required": false
+        },
+        "showOnHomepage": {
+            "type": "boolean",
+            "default": false,
+            "required": false
+        }
+    }
+}
