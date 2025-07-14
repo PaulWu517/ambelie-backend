@@ -1,0 +1,89 @@
+{
+  "kind": "collectionType",
+  "collectionName": "website_users",
+  "info": {
+    "singularName": "website-user",
+    "pluralName": "website-users",
+    "displayName": "Website User",
+    "description": "Frontend website users who register via email verification"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-type-builder": {
+      "visible": true
+    }
+  },
+  "attributes": {
+    "email": {
+      "type": "email",
+      "required": true,
+      "unique": true
+    },
+    "name": {
+      "type": "string"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "dateOfBirth": {
+      "type": "date"
+    },
+    "avatar": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "isEmailVerified": {
+      "type": "boolean",
+      "default": true
+    },
+    "lastLoginAt": {
+      "type": "datetime"
+    },
+    "preferences": {
+      "type": "json",
+      "default": {}
+    },
+    "shippingAddresses": {
+      "type": "json",
+      "default": []
+    },
+    "billingAddress": {
+      "type": "json",
+      "default": {}
+    },
+    "orders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order.order",
+      "mappedBy": "customer"
+    },
+    "wishlist": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product"
+    },
+    "newsletterSubscribed": {
+      "type": "boolean",
+      "default": false
+    },
+    "source": {
+      "type": "enumeration",
+      "enum": ["email_verification", "social_login", "manual"],
+      "default": "email_verification"
+    }
+  }
+} 

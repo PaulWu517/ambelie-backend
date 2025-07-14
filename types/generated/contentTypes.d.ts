@@ -373,6 +373,31 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAuthAuth extends Struct.SingleTypeSchema {
+  collectionName: 'auth';
+  info: {
+    description: 'Authentication configuration';
+    displayName: 'Auth';
+    pluralName: 'auths';
+    singularName: 'auth';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::auth.auth'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
@@ -519,16 +544,36 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
   };
   attributes: {
     billingAddress: Schema.Attribute.JSON;
+    carrier: Schema.Attribute.Enumeration<
+      [
+        'ups',
+        'fedex',
+        'dhl',
+        'usps',
+        'tnt',
+        'dpex',
+        'aramex',
+        'sf_express',
+        'china_post',
+        'other',
+      ]
+    >;
+    carrierName: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     currency: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'USD'>;
+    customer: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::website-user.website-user'
+    >;
     customerEmail: Schema.Attribute.Email & Schema.Attribute.Required;
     customerName: Schema.Attribute.String & Schema.Attribute.Required;
     customerPhone: Schema.Attribute.String;
     deliveryDate: Schema.Attribute.DateTime;
+    estimatedDeliveryDate: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
       Schema.Attribute.Private;
@@ -550,12 +595,15 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     status: Schema.Attribute.Enumeration<
       [
         'pending',
+        'confirmed',
         'paid',
         'processing',
         'shipped',
+        'out_for_delivery',
         'delivered',
         'completed',
         'cancelled',
+        'refunded',
       ]
     > &
       Schema.Attribute.Required &
@@ -564,6 +612,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     tax: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>;
     totalAmount: Schema.Attribute.Decimal & Schema.Attribute.Required;
     trackingNumber: Schema.Attribute.String;
+    trackingUrl: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -711,6 +760,63 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiWebsiteUserWebsiteUser extends Struct.CollectionTypeSchema {
+  collectionName: 'website_users';
+  info: {
+    description: 'Frontend website users who register via email verification';
+    displayName: 'Website User';
+    pluralName: 'website-users';
+    singularName: 'website-user';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  pluginOptions: {
+    'content-type-builder': {
+      visible: true;
+    };
+  };
+  attributes: {
+    avatar: Schema.Attribute.Media<'images'>;
+    billingAddress: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    dateOfBirth: Schema.Attribute.Date;
+    email: Schema.Attribute.Email &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    firstName: Schema.Attribute.String;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    isEmailVerified: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    lastLoginAt: Schema.Attribute.DateTime;
+    lastName: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::website-user.website-user'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String;
+    newsletterSubscribed: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    orders: Schema.Attribute.Relation<'oneToMany', 'api::order.order'>;
+    phone: Schema.Attribute.String;
+    preferences: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    publishedAt: Schema.Attribute.DateTime;
+    shippingAddresses: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
+    source: Schema.Attribute.Enumeration<
+      ['email_verification', 'social_login', 'manual']
+    > &
+      Schema.Attribute.DefaultTo<'email_verification'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    wishlist: Schema.Attribute.Relation<'manyToMany', 'api::product.product'>;
   };
 }
 
@@ -1169,7 +1275,6 @@ export interface PluginUsersPermissionsUser
   };
   options: {
     draftAndPublish: false;
-    timestamps: true;
   };
   attributes: {
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
@@ -1223,6 +1328,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::auth.auth': ApiAuthAuth;
       'api::category.category': ApiCategoryCategory;
       'api::exhibition.exhibition': ApiExhibitionExhibition;
       'api::order-item.order-item': ApiOrderItemOrderItem;
@@ -1230,6 +1336,7 @@ declare module '@strapi/strapi' {
       'api::payment.payment': ApiPaymentPayment;
       'api::product.product': ApiProductProduct;
       'api::project.project': ApiProjectProject;
+      'api::website-user.website-user': ApiWebsiteUserWebsiteUser;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

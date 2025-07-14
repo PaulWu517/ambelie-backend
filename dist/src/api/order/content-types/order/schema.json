@@ -66,6 +66,12 @@
         "customerPhone": {
             "type": "string"
         },
+        "customer": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::website-user.website-user",
+            "inversedBy": "orders"
+        },
         "shippingAddress": {
             "type": "json",
             "required": true
