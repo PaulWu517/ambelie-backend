@@ -113,6 +113,61 @@ export default factories.createCoreController('api::website-user.website-user', 
     }
   },
 
+  // 获取用户的所有订单
+  async getUserOrders(ctx) {
+    try {
+      const authHeader = ctx.request.headers.authorization;
+        
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return ctx.unauthorized('Missing or invalid authorization header');
+      }
+
+      const token = authHeader.substring(7);
+      const userInfo = strapi.service('api::website-user.website-user').verifyUserToken(token);
+
+      if (!userInfo) {
+        return ctx.unauthorized('Invalid or expired token');
+      }
+
+      const websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId);
+
+      if (!websiteUser || !websiteUser.isActive) {
+        return ctx.unauthorized('User not found or inactive');
+      }
+
+             // 获取用户的订单 - 通过关系和邮箱双重查询
+       const orders = await strapi.entityService.findMany('api::order.order', {
+         filters: {
+           $or: [
+             { customer: { id: websiteUser.id } }, // 通过关系关联的订单
+             { customerEmail: websiteUser.email }, // 通过邮箱关联的订单
+           ],
+         },
+        populate: {
+          orderItems: {
+            populate: ['product'],
+          },
+          payments: true,
+          customer: true,
+        },
+        sort: { createdAt: 'desc' },
+      });
+
+      ctx.send({
+        success: true,
+        data: orders,
+        user: {
+          id: websiteUser.id,
+          email: websiteUser.email,
+          name: websiteUser.name,
+        },
+      });
+    } catch (error) {
+      console.error('Get user orders error:', error);
+      return ctx.internalServerError('Failed to get user orders');
+    }
+  },
+
   // 更新用户信息
   async updateProfile(ctx) {
     ctx.send({ message: 'Profile update endpoint is not implemented yet.' });
