@@ -62,6 +62,9 @@
     "origin": {
       "type": "string"
     },
+    "designer": {
+      "type": "string"
+    },
     "category": {
       "type": "relation",
       "relation": "manyToOne",

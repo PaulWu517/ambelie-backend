@@ -24,10 +24,7 @@
     "projectType": {
       "type": "string"
     },
-    "startDate": {
-      "type": "date"
-    },
-    "endDate": {
+    "date": {
       "type": "date"
     },
     "introduction": {
@@ -49,6 +46,13 @@
         "videos",
         "audios"
       ]
+    },
+    "showOnHomepage": {
+      "type": "boolean",
+      "default": false
+    },
+    "location": {
+      "type": "string"
     }
   }
 }

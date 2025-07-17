@@ -7,6 +7,12 @@ export default factories.createCoreController('api::website-user.website-user', 
       console.log('=== Website User API Called ===');
       console.log('Request body:', ctx.request.body);
       
+      // 检查必要的服务是否可用
+      if (!strapi || !strapi.query || !strapi.service) {
+        console.error('Strapi instance or services not available');
+        return ctx.internalServerError('Server configuration error');
+      }
+      
       const { email, code, name } = ctx.request.body;
 
       if (!email || !code) {
@@ -16,6 +22,17 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       const lowercaseEmail = email.toLowerCase();
       console.log('Processing user:', lowercaseEmail);
+      
+      // 测试数据库连接和content-type
+      try {
+        const testQuery = await strapi.query('api::website-user.website-user').findMany({
+          limit: 1
+        });
+        console.log('Database connection test successful, found users:', testQuery.length);
+      } catch (testError) {
+        console.error('Database connection test failed:', testError.message);
+        return ctx.internalServerError('Database connection failed', { error: testError.message });
+      }
       
       let websiteUser;
 
@@ -29,19 +46,26 @@ export default factories.createCoreController('api::website-user.website-user', 
         if (!websiteUser) {
           // 创建新用户
           console.log('Creating new user...');
-          websiteUser = await strapi.service('api::website-user.website-user').create({
-            data: {
-              email: lowercaseEmail,
-              name: name || email.split('@')[0],
-              firstName: name || email.split('@')[0],
-              isActive: true,
-              isEmailVerified: true,
-              lastLoginAt: new Date(),
-              source: 'email_verification',
-              publishedAt: new Date(),
-            }
-          });
-          console.log('New user created:', websiteUser.id);
+          try {
+            // 使用entityService创建用户（推荐方式）
+            websiteUser = await strapi.entityService.create('api::website-user.website-user', {
+              data: {
+                email: lowercaseEmail,
+                name: name || email.split('@')[0],
+                firstName: name || email.split('@')[0],
+                isActive: true,
+                isEmailVerified: true,
+                lastLoginAt: new Date(),
+                source: 'email_verification',
+              }
+            });
+            console.log('New user created successfully:', websiteUser?.id);
+            console.log('Created user object:', JSON.stringify(websiteUser, null, 2));
+          } catch (createError) {
+            console.error('Failed to create user:', createError);
+            console.error('Create error details:', createError.stack);
+            throw createError;
+          }
         } else {
           // 更新现有用户
           console.log('Updating existing user...');
@@ -51,14 +75,36 @@ export default factories.createCoreController('api::website-user.website-user', 
           if (name && name !== websiteUser.name) {
             updateData.name = name;
           }
-          websiteUser = await strapi.service('api::website-user.website-user').update(websiteUser.id, {
-            data: updateData
-          });
-          console.log('User updated:', websiteUser.id);
+          try {
+            // 使用entityService更新用户（推荐方式）
+            websiteUser = await strapi.entityService.update('api::website-user.website-user', websiteUser.id, {
+              data: updateData
+            });
+            console.log('User updated successfully:', websiteUser?.id);
+            console.log('Updated user object:', JSON.stringify(websiteUser, null, 2));
+          } catch (updateError) {
+            console.error('Failed to update user:', updateError);
+            console.error('Update error details:', updateError.stack);
+            throw updateError;
+          }
         }
 
-        const token = strapi.service('api::website-user.website-user').generateUserToken(websiteUser);
-        console.log('Token generated for user:', websiteUser.id);
+        // 确保websiteUser不为null
+        if (!websiteUser || !websiteUser.id) {
+          console.error('WebsiteUser is null or missing id after create/update operation');
+          throw new Error('Failed to create or update user - user object is null');
+        }
+
+        // 生成用户token
+        console.log('Generating token for user:', websiteUser.id);
+        let token;
+        try {
+          token = strapi.service('api::website-user.website-user').generateUserToken(websiteUser);
+          console.log('Token generated successfully for user:', websiteUser.id);
+        } catch (tokenError) {
+          console.error('Failed to generate token:', tokenError);
+          throw new Error('Failed to generate user token');
+        }
 
         ctx.send({
           success: true,

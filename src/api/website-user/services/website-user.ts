@@ -17,7 +17,6 @@ export default factories.createCoreService('api::website-user.website-user', ({ 
         isActive: true,
         isEmailVerified: true,
         lastLoginAt: new Date(),
-        publishedAt: new Date(), // 确保内容被发布
       }
     });
   },
@@ -32,6 +31,17 @@ export default factories.createCoreService('api::website-user.website-user', ({ 
 
   // 生成用户token
   generateUserToken(user: any) {
+    if (!user) {
+      throw new Error('User object is null or undefined');
+    }
+    if (!user.id) {
+      throw new Error('User object is missing id property');
+    }
+    if (!user.email) {
+      throw new Error('User object is missing email property');
+    }
+    
+    console.log('Generating token for user:', { id: user.id, email: user.email });
     return Buffer.from(`${user.id}:${user.email}:${Date.now()}`).toString('base64');
   },
 
