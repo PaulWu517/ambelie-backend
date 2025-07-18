@@ -49,16 +49,16 @@ export default factories.createCoreController('api::website-user.website-user', 
           try {
             // 使用entityService创建用户（推荐方式）
             websiteUser = await strapi.entityService.create('api::website-user.website-user', {
-              data: {
-                email: lowercaseEmail,
-                name: name || email.split('@')[0],
-                firstName: name || email.split('@')[0],
-                isActive: true,
-                isEmailVerified: true,
-                lastLoginAt: new Date(),
-                source: 'email_verification',
-              }
-            });
+            data: {
+              email: lowercaseEmail,
+              name: name || email.split('@')[0],
+              firstName: name || email.split('@')[0],
+              isActive: true,
+              isEmailVerified: true,
+              lastLoginAt: new Date(),
+              source: 'email_verification',
+            }
+          });
             console.log('New user created successfully:', websiteUser?.id);
             console.log('Created user object:', JSON.stringify(websiteUser, null, 2));
           } catch (createError) {
@@ -78,8 +78,8 @@ export default factories.createCoreController('api::website-user.website-user', 
           try {
             // 使用entityService更新用户（推荐方式）
             websiteUser = await strapi.entityService.update('api::website-user.website-user', websiteUser.id, {
-              data: updateData
-            });
+            data: updateData
+          });
             console.log('User updated successfully:', websiteUser?.id);
             console.log('Updated user object:', JSON.stringify(websiteUser, null, 2));
           } catch (updateError) {
@@ -105,6 +105,15 @@ export default factories.createCoreController('api::website-user.website-user', 
           console.error('Failed to generate token:', tokenError);
           throw new Error('Failed to generate user token');
         }
+
+        // 设置cookie
+        ctx.cookies.set('website-user-token', token, {
+          httpOnly: false, // 允许前端JavaScript访问
+          secure: process.env.NODE_ENV === 'production', // 生产环境使用HTTPS
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 跨域支持
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7天
+          domain: process.env.NODE_ENV === 'production' ? undefined : undefined, // 生产环境自动设置
+        });
 
         ctx.send({
           success: true,
@@ -218,4 +227,4 @@ export default factories.createCoreController('api::website-user.website-user', 
   async updateProfile(ctx) {
     ctx.send({ message: 'Profile update endpoint is not implemented yet.' });
   }
-})); 
+}));
