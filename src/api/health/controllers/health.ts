@@ -78,4 +78,4 @@ export default ({ strapi }) => ({
       message: 'Server is running'
     });
   }
-}));
+});

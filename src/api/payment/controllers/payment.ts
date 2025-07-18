@@ -1,5 +1,211 @@
 import { factories } from '@strapi/strapi';
 import { createCheckoutSession, verifyWebhookSignature, getCheckoutSession } from '../../../services/stripe';
+
+// 处理支付会话完成
+async function handleCheckoutSessionCompleted(session, strapi) {
+  try {
+    // 获取详细的session信息
+    const fullSession = await getCheckoutSession(session.id);
+    
+    // 从metadata中获取订单项信息
+    const orderItemsData = fullSession.metadata?.items ? JSON.parse(fullSession.metadata.items) : [];
+    
+    // 检查是否有关联的Website User
+    let websiteUser = null;
+    if (fullSession.metadata?.websiteUserId) {
+      try {
+        websiteUser = await strapi.entityService.findOne('api::website-user.website-user', parseInt(fullSession.metadata.websiteUserId));
+        console.log('Found associated website user:', websiteUser?.email);
+      } catch (userError) {
+        console.log('Could not find website user:', userError.message);
+      }
+    }
+    
+    // 获取 payment intent ID 以确定订单初始状态
+    const paymentIntentId = typeof fullSession.payment_intent === 'string' 
+      ? fullSession.payment_intent 
+      : fullSession.payment_intent?.id;
+
+    // 创建订单数据
+    const orderData = {
+      orderNumber: `ORDER-${Date.now()}`,
+      status: paymentIntentId ? 'pending' : 'paid', // 有 payment intent 时为 pending，等待支付完成
+      totalAmount: (fullSession.amount_total || 0) / 100, // 转换为元
+      subtotal: (fullSession.amount_subtotal || 0) / 100,
+      currency: fullSession.currency?.toUpperCase() || 'USD',
+      customerEmail: fullSession.customer_details?.email || '',
+      customerName: fullSession.customer_details?.name || '',
+      customerPhone: fullSession.customer_details?.phone || '',
+      shippingAddress: (fullSession as any).shipping_details?.address || fullSession.customer_details?.address || {},
+      billingAddress: fullSession.customer_details?.address || {},
+      orderDate: new Date().toISOString(),
+      // 关联Website User（如果存在）
+      ...(websiteUser && { customer: websiteUser.id }),
+    };
+
+    const order = await strapi.entityService.create('api::order.order', {
+      data: orderData,
+    });
+
+    // 创建订单项 (Order-items) - 这是之前缺少的部分
+    if (orderItemsData && orderItemsData.length > 0) {
+      for (const item of orderItemsData) {
+        try {
+          // 获取产品信息
+          const product = await strapi.entityService.findOne('api::product.product', item.productId);
+          
+          if (product) {
+            // 创建产品快照
+            const productSnapshot = {
+              id: product.id,
+              name: product.name || '',
+              price: product.price || 0,
+              description: product.description || '',
+              slug: product.slug || '',
+            };
+
+            // 创建订单项
+            await strapi.entityService.create('api::order-item.order-item', {
+              data: {
+                quantity: item.quantity || 1,
+                unitPrice: item.unitPrice || product.price || 0,
+                totalPrice: (item.quantity || 1) * (item.unitPrice || product.price || 0),
+                product: item.productId,
+                order: order.id,
+                productSnapshot: productSnapshot,
+              },
+            });
+          }
+        } catch (itemError) {
+          strapi.log.error(`创建订单项失败 - ProductID: ${item.productId}`, itemError);
+        }
+      }
+    }
+
+    // 创建支付记录
+    // 只有在有有效的 payment intent ID 时才创建支付记录
+    if (paymentIntentId) {
+      await strapi.entityService.create('api::payment.payment', {
+        data: {
+          paymentId: paymentIntentId,
+          amount: (fullSession.amount_total || 0) / 100,
+          currency: fullSession.currency?.toUpperCase() || 'USD',
+          status: 'processing', // 初始状态为 processing，等待 payment_intent 事件更新
+          paymentMethod: fullSession.payment_method_types?.[0] || 'card',
+          provider: 'stripe' as const,
+          providerTransactionId: fullSession.id,
+          order: order.id,
+          paymentDate: new Date().toISOString(),
+          metadata: {
+            sessionId: session.id,
+            customerEmail: fullSession.customer_details?.email,
+            customerName: fullSession.customer_details?.name,
+          },
+        },
+      });
+      strapi.log.info(`支付记录创建成功，PaymentIntent ID: ${paymentIntentId}`);
+    } else {
+      // 如果没有 payment intent，可能是免费订单或其他情况
+      strapi.log.warn(`Checkout session ${fullSession.id} 没有关联的 payment_intent，可能是免费订单`);
+      
+      // 对于没有 payment intent 的情况，创建一个基于 session 的支付记录
+      await strapi.entityService.create('api::payment.payment', {
+        data: {
+          paymentId: fullSession.id, // 使用 session ID
+          amount: (fullSession.amount_total || 0) / 100,
+          currency: fullSession.currency?.toUpperCase() || 'USD',
+          status: 'succeeded', // 直接标记为成功
+          paymentMethod: fullSession.payment_method_types?.[0] || 'free',
+          provider: 'stripe' as const,
+          providerTransactionId: fullSession.id,
+          order: order.id,
+          paymentDate: new Date().toISOString(),
+          metadata: {
+            sessionId: session.id,
+            customerEmail: fullSession.customer_details?.email,
+            customerName: fullSession.customer_details?.name,
+            note: 'No payment intent - possibly free order',
+          },
+        },
+      });
+    }
+
+    strapi.log.info(`订单 ${order.orderNumber} 创建成功，包含 ${orderItemsData.length} 个订单项`);
+  } catch (error) {
+    strapi.log.error('处理支付会话完成事件失败:', error);
+  }
+}
+
+// 处理支付成功
+async function handlePaymentSucceeded(paymentIntent, strapi) {
+  try {
+    // 通过 paymentId 字段查找支付记录并更新状态
+    const updatedPayments = await strapi.db.query('api::payment.payment').updateMany({
+      where: { paymentId: paymentIntent.id },
+      data: { status: 'succeeded' },
+    });
+
+    if (updatedPayments.count > 0) {
+      strapi.log.info(`支付 ${paymentIntent.id} 状态更新为成功，更新了 ${updatedPayments.count} 条记录`);
+      
+      // 同时更新关联订单的状态为已支付
+      const payments = await strapi.entityService.findMany('api::payment.payment', {
+        filters: { paymentId: paymentIntent.id },
+        populate: ['order'],
+      });
+      
+      for (const payment of payments) {
+        if (payment.order) {
+          await strapi.entityService.update('api::order.order', payment.order.id, {
+            data: { status: 'paid' },
+          });
+          strapi.log.info(`订单 ${payment.order.orderNumber} 状态更新为已支付`);
+        }
+      }
+    } else {
+      strapi.log.warn(`未找到 paymentId 为 ${paymentIntent.id} 的支付记录`);
+    }
+  } catch (error) {
+    strapi.log.error('处理支付成功事件失败:', error);
+  }
+}
+
+// 处理支付失败
+async function handlePaymentFailed(paymentIntent, strapi) {
+  try {
+    // 通过 paymentId 字段查找支付记录并更新状态
+    const updatedPayments = await strapi.db.query('api::payment.payment').updateMany({
+      where: { paymentId: paymentIntent.id },
+      data: { 
+        status: 'failed',
+        failureReason: paymentIntent.last_payment_error?.message || '支付失败',
+      },
+    });
+
+    if (updatedPayments.count > 0) {
+      strapi.log.info(`支付 ${paymentIntent.id} 状态更新为失败，更新了 ${updatedPayments.count} 条记录`);
+      
+      // 同时更新关联订单的状态为失败
+      const payments = await strapi.entityService.findMany('api::payment.payment', {
+        filters: { paymentId: paymentIntent.id },
+        populate: ['order'],
+      });
+      
+      for (const payment of payments) {
+        if (payment.order) {
+          await strapi.entityService.update('api::order.order', payment.order.id, {
+            data: { status: 'payment_failed' },
+          });
+          strapi.log.info(`订单 ${payment.order.orderNumber} 状态更新为支付失败`);
+        }
+      }
+    } else {
+      strapi.log.warn(`未找到 paymentId 为 ${paymentIntent.id} 的支付记录`);
+    }
+  } catch (error) {
+    strapi.log.error('处理支付失败事件失败:', error);
+  }
+}
  
 export default factories.createCoreController('api::payment.payment', ({ strapi }) => ({
   
@@ -162,17 +368,17 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
       switch (event.type) {
         case 'checkout.session.completed':
           strapi.log.info('处理checkout.session.completed事件');
-          await this.handleCheckoutSessionCompleted(event.data.object);
+          await handleCheckoutSessionCompleted(event.data.object, strapi);
           break;
           
         case 'payment_intent.succeeded':
           strapi.log.info('处理payment_intent.succeeded事件');
-          await this.handlePaymentSucceeded(event.data.object);
+          await handlePaymentSucceeded(event.data.object, strapi);
           break;
           
         case 'payment_intent.payment_failed':
           strapi.log.info('处理payment_intent.payment_failed事件');
-          await this.handlePaymentFailed(event.data.object);
+          await handlePaymentFailed(event.data.object, strapi);
           break;
           
         default:
@@ -186,145 +392,6 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
       strapi.log.error('处理webhook事件失败:', err);
       // 即使处理失败，也返回200避免Stripe重试
       return ctx.send({ received: true, error: 'Event processing failed' });
-    }
-  },
-
-  // 处理支付会话完成
-  async handleCheckoutSessionCompleted(session) {
-    try {
-      // 获取详细的session信息
-      const fullSession = await getCheckoutSession(session.id);
-      
-      // 从metadata中获取订单项信息
-      const orderItemsData = fullSession.metadata?.items ? JSON.parse(fullSession.metadata.items) : [];
-      
-      // 检查是否有关联的Website User
-      let websiteUser = null;
-      if (fullSession.metadata?.websiteUserId) {
-        try {
-          websiteUser = await strapi.entityService.findOne('api::website-user.website-user', parseInt(fullSession.metadata.websiteUserId));
-          console.log('Found associated website user:', websiteUser?.email);
-        } catch (userError) {
-          console.log('Could not find website user:', userError.message);
-        }
-      }
-      
-      // 创建订单数据
-      const orderData = {
-        orderNumber: `ORDER-${Date.now()}`,
-        status: 'paid' as const,
-        totalAmount: (fullSession.amount_total || 0) / 100, // 转换为元
-        subtotal: (fullSession.amount_subtotal || 0) / 100,
-        currency: fullSession.currency?.toUpperCase() || 'USD',
-        customerEmail: fullSession.customer_details?.email || '',
-        customerName: fullSession.customer_details?.name || '',
-        customerPhone: fullSession.customer_details?.phone || '',
-        shippingAddress: (fullSession as any).shipping_details?.address || fullSession.customer_details?.address || {},
-        billingAddress: fullSession.customer_details?.address || {},
-        orderDate: new Date().toISOString(),
-        // 关联Website User（如果存在）
-        ...(websiteUser && { customer: websiteUser.id }),
-      };
-
-      const order = await strapi.entityService.create('api::order.order', {
-        data: orderData,
-      });
-
-      // 创建订单项 (Order-items) - 这是之前缺少的部分
-      if (orderItemsData && orderItemsData.length > 0) {
-        for (const item of orderItemsData) {
-          try {
-            // 获取产品信息
-            const product = await strapi.entityService.findOne('api::product.product', item.productId);
-            
-            if (product) {
-              // 创建产品快照
-              const productSnapshot = {
-                id: product.id,
-                name: product.name || '',
-                price: product.price || 0,
-                description: product.description || '',
-                slug: product.slug || '',
-              };
-
-              // 创建订单项
-              await strapi.entityService.create('api::order-item.order-item', {
-                data: {
-                  quantity: item.quantity || 1,
-                  unitPrice: item.unitPrice || product.price || 0,
-                  totalPrice: (item.quantity || 1) * (item.unitPrice || product.price || 0),
-                  product: item.productId,
-                  order: order.id,
-                  productSnapshot: productSnapshot,
-                },
-              });
-            }
-          } catch (itemError) {
-            strapi.log.error(`创建订单项失败 - ProductID: ${item.productId}`, itemError);
-          }
-        }
-      }
-
-      // 创建支付记录
-      const paymentIntentId = typeof fullSession.payment_intent === 'string' 
-        ? fullSession.payment_intent 
-        : fullSession.payment_intent?.id;
-
-      await strapi.entityService.create('api::payment.payment', {
-        data: {
-          paymentId: paymentIntentId || fullSession.id,
-          amount: (fullSession.amount_total || 0) / 100,
-          currency: fullSession.currency?.toUpperCase() || 'USD',
-          status: 'succeeded' as const,
-          paymentMethod: fullSession.payment_method_types?.[0] || 'card',
-          provider: 'stripe' as const,
-          providerTransactionId: fullSession.id,
-          order: order.id,
-          paymentDate: new Date().toISOString(),
-          metadata: {
-            sessionId: session.id,
-            customerEmail: fullSession.customer_details?.email,
-            customerName: fullSession.customer_details?.name,
-          },
-        },
-      });
-
-      strapi.log.info(`订单 ${order.orderNumber} 创建成功，包含 ${orderItemsData.length} 个订单项`);
-    } catch (error) {
-      strapi.log.error('处理支付会话完成事件失败:', error);
-    }
-  },
-
-  // 处理支付成功
-  async handlePaymentSucceeded(paymentIntent) {
-    try {
-      // 更新支付状态
-      await strapi.db.query('api::payment.payment').update({
-        where: { paymentId: paymentIntent.id },
-        data: { status: 'succeeded' },
-      });
-
-      strapi.log.info(`支付 ${paymentIntent.id} 成功`);
-    } catch (error) {
-      strapi.log.error('处理支付成功事件失败:', error);
-    }
-  },
-
-  // 处理支付失败
-  async handlePaymentFailed(paymentIntent) {
-    try {
-      // 更新支付状态
-      await strapi.db.query('api::payment.payment').update({
-        where: { paymentId: paymentIntent.id },
-        data: { 
-          status: 'failed',
-          failureReason: paymentIntent.last_payment_error?.message || '支付失败',
-        },
-      });
-
-      strapi.log.info(`支付 ${paymentIntent.id} 失败`);
-    } catch (error) {
-      strapi.log.error('处理支付失败事件失败:', error);
     }
   },
 
