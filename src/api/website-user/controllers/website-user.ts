@@ -106,14 +106,31 @@ export default factories.createCoreController('api::website-user.website-user', 
           throw new Error('Failed to generate user token');
         }
 
-        // 设置cookie
-        ctx.cookies.set('website-user-token', token, {
+        // 设置cookie - 添加详细调试信息
+        const cookieOptions = {
           httpOnly: false, // 允许前端JavaScript访问
           secure: process.env.NODE_ENV === 'production', // 生产环境使用HTTPS
-          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 跨域支持
+          sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'strict' | 'lax' | 'none', // 跨域支持
           maxAge: 7 * 24 * 60 * 60 * 1000, // 7天
-          domain: process.env.NODE_ENV === 'production' ? undefined : undefined, // 生产环境自动设置
-        });
+        };
+        
+        console.log('=== Cookie设置调试信息 ===');
+        console.log('环境:', process.env.NODE_ENV);
+        console.log('Cookie选项:', cookieOptions);
+        console.log('Token长度:', token?.length);
+        console.log('请求来源:', ctx.request.headers.origin);
+        console.log('User-Agent:', ctx.request.headers['user-agent']);
+        
+        try {
+          ctx.cookies.set('website-user-token', token, cookieOptions);
+          console.log('✅ Cookie设置成功');
+          
+          // 验证cookie是否被设置
+          const setCookieHeader = ctx.response.headers['set-cookie'];
+          console.log('Set-Cookie头:', setCookieHeader);
+        } catch (cookieError) {
+          console.error('❌ Cookie设置失败:', cookieError);
+        }
 
         ctx.send({
           success: true,
