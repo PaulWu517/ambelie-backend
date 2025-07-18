@@ -56,6 +56,10 @@
         "providerTransactionId": {
             "type": "string"
         },
+        "orderNumber": {
+            "type": "string",
+            "required": false
+        },
         "order": {
             "type": "relation",
             "relation": "manyToOne",

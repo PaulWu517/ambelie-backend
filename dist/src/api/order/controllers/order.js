@@ -2,6 +2,52 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const strapi_1 = require("@strapi/strapi");
 exports.default = strapi_1.factories.createCoreController('api::order.order', ({ strapi }) => ({
+    // 获取订单列表（带分页和过滤）
+    async find(ctx) {
+        try {
+            console.log('Orders API find method called');
+            console.log('Query params:', ctx.query);
+            // 添加默认分页限制以防止性能问题
+            const { page = 1, pageSize = 25, ...filters } = ctx.query;
+            // 限制最大页面大小
+            const limitedPageSize = Math.min(parseInt(pageSize) || 25, 100);
+            const orders = await strapi.entityService.findMany('api::order.order', {
+                ...filters,
+                start: (parseInt(page) - 1) * limitedPageSize,
+                limit: limitedPageSize,
+                populate: {
+                    orderItems: {
+                        populate: ['product'],
+                    },
+                    payments: true,
+                    customer: true,
+                },
+                sort: { createdAt: 'desc' },
+            });
+            // 获取总数用于分页
+            const total = await strapi.entityService.count('api::order.order', {
+                ...filters,
+            });
+            console.log(`Found ${orders.length} orders out of ${total} total`);
+            return ctx.send({
+                success: true,
+                data: orders,
+                meta: {
+                    pagination: {
+                        page: parseInt(page),
+                        pageSize: limitedPageSize,
+                        pageCount: Math.ceil(total / limitedPageSize),
+                        total,
+                    },
+                },
+            });
+        }
+        catch (error) {
+            console.error('获取订单列表失败:', error);
+            strapi.log.error('获取订单列表失败:', error);
+            return ctx.internalServerError('获取订单列表失败');
+        }
+    },
     // 创建订单
     async create(ctx) {
         try {

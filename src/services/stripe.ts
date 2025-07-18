@@ -57,6 +57,13 @@ export const createCheckoutSession = async (params: {
         customerName,
         ...metadata,
       },
+      // 确保PaymentIntent也包含相同的metadata
+      payment_intent_data: {
+        metadata: {
+          customerName,
+          ...metadata,
+        },
+      },
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'AU', 'CN', 'HK', 'TW', 'SG', 'JP', 'KR'],
       },
@@ -64,6 +71,24 @@ export const createCheckoutSession = async (params: {
         enabled: true,
       },
     });
+    
+    strapi.log.info(`Stripe session创建成功: ${session.id}, PaymentIntent: ${session.payment_intent}`);
+    
+    // 如果有PaymentIntent，更新其metadata以包含sessionId
+    if (session.payment_intent && typeof session.payment_intent === 'string') {
+      try {
+        await stripe.paymentIntents.update(session.payment_intent, {
+          metadata: {
+            sessionId: session.id,
+            customerName,
+            ...metadata,
+          },
+        });
+        strapi.log.info(`PaymentIntent ${session.payment_intent} metadata已更新，包含sessionId: ${session.id}`);
+      } catch (updateError) {
+        strapi.log.warn(`更新PaymentIntent metadata失败:`, updateError);
+      }
+    }
 
     return {
       sessionId: session.id,
@@ -149,4 +174,4 @@ export const createRefund = async (paymentIntentId: string, amount?: number) => 
   }
 };
 
-export default stripe; 
+export default stripe;

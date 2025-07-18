@@ -647,6 +647,7 @@ export interface ApiPaymentPayment extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     metadata: Schema.Attribute.JSON;
     order: Schema.Attribute.Relation<'manyToOne', 'api::order.order'>;
+    orderNumber: Schema.Attribute.String;
     paymentDate: Schema.Attribute.DateTime;
     paymentId: Schema.Attribute.String &
       Schema.Attribute.Required &
