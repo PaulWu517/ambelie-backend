@@ -1,6 +1,8 @@
 export default [
   'strapi::logger',
+  'global::error-handler', // 自定义错误处理中间件
   'strapi::errors',
+  'global::database-check', // 数据库连接检查中间件
   'strapi::security',
   {
     name: 'strapi::cors',

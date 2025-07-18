@@ -3,6 +3,56 @@ import { createCheckoutSession, verifyWebhookSignature, getCheckoutSession } fro
  
 export default factories.createCoreController('api::payment.payment', ({ strapi }) => ({
   
+  // 获取支付记录列表（带分页和过滤）
+  async find(ctx) {
+    try {
+      console.log('Payments API find method called');
+      console.log('Query params:', ctx.query);
+      
+      // 添加默认分页限制以防止性能问题
+      const { page = 1, pageSize = 25, ...filters } = ctx.query;
+      
+      // 限制最大页面大小
+      const limitedPageSize = Math.min(parseInt(pageSize as string) || 25, 100);
+      
+      const payments = await strapi.entityService.findMany('api::payment.payment', {
+        ...filters,
+        start: (parseInt(page as string) - 1) * limitedPageSize,
+        limit: limitedPageSize,
+        populate: {
+          order: {
+            populate: ['orderItems', 'customer'],
+          },
+        },
+        sort: { createdAt: 'desc' },
+      });
+      
+      // 获取总数用于分页
+      const total = await strapi.entityService.count('api::payment.payment', {
+        ...filters,
+      });
+      
+      console.log(`Found ${payments.length} payments out of ${total} total`);
+      
+      return ctx.send({
+        success: true,
+        data: payments,
+        meta: {
+          pagination: {
+            page: parseInt(page as string),
+            pageSize: limitedPageSize,
+            pageCount: Math.ceil(total / limitedPageSize),
+            total,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('获取支付记录列表失败:', error);
+      strapi.log.error('获取支付记录列表失败:', error);
+      return ctx.internalServerError('获取支付记录列表失败');
+    }
+  },
+  
   // 创建Stripe Checkout会话
   async createCheckoutSession(ctx) {
     try {
@@ -299,4 +349,4 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
     }
   },
 
-})); 
+}));
