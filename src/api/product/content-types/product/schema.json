@@ -84,7 +84,7 @@
     },
     "isInquiryOnly": {
       "type": "boolean",
-      "default": false
+      "default": true
     },
     "materials": {
       "type": "string"

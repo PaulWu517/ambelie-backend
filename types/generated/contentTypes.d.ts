@@ -696,7 +696,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       true
     >;
     inStock: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    isInquiryOnly: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    isInquiryOnly: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
