@@ -47,21 +47,44 @@ export default factories.createCoreService('api::website-user.website-user', ({ 
 
   // 验证用户token
   verifyUserToken(token: string) {
+    console.log('=== Token验证调试信息 ===');
+    console.log('接收到的token长度:', token?.length);
+    console.log('Token前10个字符:', token?.substring(0, 10));
+    
     try {
       const decoded = Buffer.from(token, 'base64').toString('utf-8');
+      console.log('Token解码成功:', decoded);
+      
       const [userId, email, timestamp] = decoded.split(':');
+      console.log('Token解析结果:', {
+        userId,
+        email,
+        timestamp,
+        partsCount: decoded.split(':').length
+      });
       
       // 检查token是否过期（7天）
       const tokenAge = Date.now() - parseInt(timestamp);
       const maxAge = 7 * 24 * 60 * 60 * 1000; // 7天
       
+      console.log('Token时间验证:', {
+        currentTime: Date.now(),
+        tokenTimestamp: parseInt(timestamp),
+        tokenAge: tokenAge,
+        maxAge: maxAge,
+        isExpired: tokenAge > maxAge
+      });
+      
       if (tokenAge > maxAge) {
+        console.log('❌ Token已过期');
         return null;
       }
       
+      console.log('✅ Token验证成功');
       return { userId: parseInt(userId), email };
     } catch (error) {
+      console.log('❌ Token验证失败:', error);
       return null;
     }
   }
-})); 
+}));
