@@ -84,6 +84,14 @@
       "type": "enumeration",
       "enum": ["email_verification", "social_login", "manual"],
       "default": "email_verification"
+    },
+    "cart": {
+      "type": "json",
+      "default": []
+    },
+    "inquiries": {
+      "type": "json",
+      "default": []
     }
   }
-} 
+}

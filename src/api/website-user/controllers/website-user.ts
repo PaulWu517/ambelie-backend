@@ -164,7 +164,7 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       const token = authHeader.substring(7);
-      const userInfo = strapi.service('api::website-user.website-user').verifyUserToken(token);
+      const userInfo = await strapi.service('api::website-user.website-user').verifyUserToken(token);
 
       if (!userInfo) {
         return ctx.unauthorized('Invalid or expired token');
@@ -195,7 +195,7 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       const token = authHeader.substring(7);
-      const userInfo = strapi.service('api::website-user.website-user').verifyUserToken(token);
+      const userInfo = await strapi.service('api::website-user.website-user').verifyUserToken(token);
 
       if (!userInfo) {
         return ctx.unauthorized('Invalid or expired token');

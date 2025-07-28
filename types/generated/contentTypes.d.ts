@@ -786,6 +786,7 @@ export interface ApiWebsiteUserWebsiteUser extends Struct.CollectionTypeSchema {
   attributes: {
     avatar: Schema.Attribute.Media<'images'>;
     billingAddress: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    cart: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -794,6 +795,7 @@ export interface ApiWebsiteUserWebsiteUser extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
     firstName: Schema.Attribute.String;
+    inquiries: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     isEmailVerified: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<true>;

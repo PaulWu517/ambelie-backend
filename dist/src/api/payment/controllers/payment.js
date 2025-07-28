@@ -297,7 +297,7 @@ exports.default = strapi_1.factories.createCoreController('api::payment.payment'
             if (authHeader && authHeader.startsWith('Bearer ')) {
                 const token = authHeader.substring(7);
                 try {
-                    const userInfo = strapi.service('api::website-user.website-user').verifyUserToken(token);
+                    const userInfo = await strapi.service('api::website-user.website-user').verifyUserToken(token);
                     if (userInfo) {
                         websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId);
                     }
