@@ -253,17 +253,17 @@ export default factories.createCoreController('api::website-user.website-user', 
       console.log('✅ Token验证成功，用户ID:', userInfo.userId);
       
       console.log('请求体:', ctx.request.body);
-      const { productIds } = ctx.request.body;
-      console.log('提取的productIds:', productIds);
-      console.log('productIds类型:', typeof productIds);
-      console.log('是否为数组:', Array.isArray(productIds));
+      const { productSlugs } = ctx.request.body;
+      console.log('提取的productSlugs:', productSlugs);
+      console.log('productSlugs类型:', typeof productSlugs);
+      console.log('是否为数组:', Array.isArray(productSlugs));
 
-      if (!Array.isArray(productIds)) {
-        console.log('❌ productIds不是数组');
-        return ctx.badRequest('Product IDs must be an array');
+      if (!Array.isArray(productSlugs)) {
+        console.log('❌ productSlugs不是数组');
+        return ctx.badRequest('Product slugs must be an array');
       }
       
-      console.log('✅ productIds验证通过，长度:', productIds.length);
+      console.log('✅ productSlugs验证通过，长度:', productSlugs.length);
       
       console.log('开始查找用户，用户ID:', userInfo.userId);
       const websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
@@ -284,17 +284,24 @@ export default factories.createCoreController('api::website-user.website-user', 
       
       console.log('✅ 用户验证通过');
       
-      console.log('开始验证产品，产品IDs:', productIds);
-      // 暂时跳过产品验证，直接进行收藏同步测试
-      console.log('⚠️ 暂时跳过产品验证，直接进行收藏同步测试');
+      console.log('开始根据slug查找产品，产品slugs:', productSlugs);
       
-      console.log('✅ 产品验证跳过，继续执行');
+      // 根据 slug 查找产品并获取其 ID
+      const products = await strapi.entityService.findMany('api::product.product', {
+        filters: {
+          slug: {
+            $in: productSlugs
+          }
+        },
+        fields: ['id', 'slug']
+      }) as any[];
+      
+      console.log('找到的产品:', products);
+      const validProductIds = products.map(product => product.id);
+      console.log('有效的产品IDs:', validProductIds);
 
       // 合并本地收藏列表和后端收藏列表
       const serverWishlistIds = (websiteUser.wishlist || []).map(item => item.id);
-      // 确保 productIds 都是整数
-      const validProductIds = productIds.map(id => parseInt(id)).filter(id => !isNaN(id));
-      console.log('转换后的产品IDs:', validProductIds);
       const mergedWishlistIds = [...new Set([...serverWishlistIds, ...validProductIds])];
       console.log('合并后的收藏列表IDs:', mergedWishlistIds);
 
