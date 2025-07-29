@@ -796,7 +796,10 @@ export interface ApiWebsiteUserWebsiteUser extends Struct.CollectionTypeSchema {
       Schema.Attribute.Unique;
     firstName: Schema.Attribute.String;
     inquiries: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
-    inquiryItems: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
+    inquiryItems: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::product.product'
+    >;
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     isEmailVerified: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<true>;

@@ -94,8 +94,9 @@
       "default": []
     },
     "inquiryItems": {
-      "type": "json",
-      "default": []
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product"
     }
   }
 }
