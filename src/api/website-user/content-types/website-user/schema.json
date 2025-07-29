@@ -92,6 +92,10 @@
     "inquiries": {
       "type": "json",
       "default": []
+    },
+    "inquiryItems": {
+      "type": "json",
+      "default": []
     }
   }
 }

@@ -25,7 +25,7 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       ctx.send({
         success: true,
-        data: websiteUser.inquiries || [],
+        data: websiteUser.inquiryItems || [],
         user: {
           id: websiteUser.id,
           email: websiteUser.email,
@@ -72,15 +72,15 @@ export default factories.createCoreController('api::website-user.website-user', 
         return ctx.badRequest('Product not found');
       }
 
-      let inquiries = (websiteUser.inquiries as any[]) || [];
-      const existingItemIndex = inquiries.findIndex(item => item.productId === productId);
+      let inquiryItems = (websiteUser.inquiryItems as any[]) || [];
+      const existingItemIndex = inquiryItems.findIndex(item => item.productId === productId);
 
       if (existingItemIndex > -1) {
         // 更新询价时间
-        inquiries[existingItemIndex].inquiryDate = new Date().toISOString();
+        inquiryItems[existingItemIndex].inquiryDate = new Date().toISOString();
       } else {
         // 添加新询价商品
-        inquiries.push({
+        inquiryItems.push({
           productId,
           inquiryDate: new Date().toISOString()
         });
@@ -88,13 +88,13 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       // 更新用户询价列表
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { inquiries }
+        data: { inquiryItems }
       });
 
       ctx.send({
         success: true,
         message: 'Product added to inquiry list successfully',
-        data: inquiries
+        data: inquiryItems
       });
     } catch (error) {
       console.error('Add to inquiry error:', error);
@@ -130,18 +130,18 @@ export default factories.createCoreController('api::website-user.website-user', 
         return ctx.unauthorized('User not found or inactive');
       }
 
-      let inquiries = (websiteUser.inquiries as any[]) || [];
-      inquiries = inquiries.filter(item => item.productId !== productId);
+      let inquiryItems = (websiteUser.inquiryItems as any[]) || [];
+      inquiryItems = inquiryItems.filter(item => item.productId !== productId);
 
       // 更新用户询价列表
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { inquiries }
+        data: { inquiryItems }
       });
 
       ctx.send({
         success: true,
         message: 'Product removed from inquiry list successfully',
-        data: inquiries
+        data: inquiryItems
       });
     } catch (error) {
       console.error('Remove from inquiry error:', error);
@@ -173,7 +173,7 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       // 清空询价列表
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { inquiries: [] }
+        data: { inquiryItems: [] }
       });
 
       ctx.send({
@@ -239,19 +239,19 @@ export default factories.createCoreController('api::website-user.website-user', 
       console.log('📋 [Inquiry Sync] Valid product IDs:', validProductIds);
 
       // 合并本地询价列表和后端询价列表
-      let serverInquiries = (websiteUser.inquiries as any[]) || [];
-      const mergedInquiries = [...serverInquiries];
+      let serverInquiryItems = (websiteUser.inquiryItems as any[]) || [];
+      const mergedInquiryItems = [...serverInquiryItems];
 
       validProductIds.forEach(productId => {
-        const existingIndex = mergedInquiries.findIndex(item => item.productId === productId);
+        const existingIndex = mergedInquiryItems.findIndex(item => item.productId === productId);
         if (existingIndex > -1) {
           // 更新询价时间
-          mergedInquiries[existingIndex] = {
-            ...mergedInquiries[existingIndex],
+          mergedInquiryItems[existingIndex] = {
+            ...mergedInquiryItems[existingIndex],
             inquiryDate: new Date().toISOString()
           };
         } else {
-          mergedInquiries.push({
+          mergedInquiryItems.push({
             productId: productId,
             inquiryDate: new Date().toISOString()
           });
@@ -260,13 +260,13 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       // 更新用户询价列表
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { inquiries: mergedInquiries }
+        data: { inquiryItems: mergedInquiryItems }
       });
 
       ctx.send({
         success: true,
         message: 'Inquiry list synced successfully',
-        data: mergedInquiries
+        data: mergedInquiryItems
       });
     } catch (error) {
       console.error('Sync inquiries error:', error);
@@ -338,9 +338,29 @@ export default factories.createCoreController('api::website-user.website-user', 
         }
       });
 
-      // 可选：清空用户的询价列表
+      // 将当前询价保存到历史记录，并清空当前询价列表
+      const currentInquiries = (websiteUser.inquiries as any[]) || [];
+      const newInquiryRecord = {
+        submittedAt: new Date().toISOString(),
+        customerInfo: {
+          email,
+          firstName,
+          lastName,
+          phone,
+          message
+        },
+        products: products.map(p => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug
+        }))
+      };
+      
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { inquiries: [] }
+        data: { 
+          inquiries: [...currentInquiries, newInquiryRecord],
+          inquiryItems: [] // 清空当前询价列表
+        }
       });
 
       ctx.send({
