@@ -27,7 +27,7 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       ctx.send({
         success: true,
-        data: websiteUser.inquiryItems || [],
+        data: (websiteUser as any).inquiryItems || [],
         user: {
           id: websiteUser.id,
           email: websiteUser.email,
@@ -77,7 +77,7 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       // 检查产品是否已在询价列表中
-      const currentInquiryItems = websiteUser.inquiryItems || [];
+      const currentInquiryItems = (websiteUser as any).inquiryItems || [];
       const isAlreadyInInquiry = currentInquiryItems.some(item => item.id === productId);
 
       if (!isAlreadyInInquiry) {
@@ -86,7 +86,7 @@ export default factories.createCoreController('api::website-user.website-user', 
         
         await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
           data: {
-            inquiryItems: updatedInquiryItems
+            inquiryItems: updatedInquiryItems as any
           }
         });
       }
@@ -99,7 +99,7 @@ export default factories.createCoreController('api::website-user.website-user', 
       ctx.send({
         success: true,
         message: 'Product added to inquiry list successfully',
-        data: updatedUser.inquiryItems || []
+        data: (updatedUser as any).inquiryItems || []
       });
     } catch (error) {
       console.error('Add to inquiry error:', error);
@@ -138,7 +138,7 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       // 从询价列表中移除产品
-      const currentInquiryItems = websiteUser.inquiryItems || [];
+      const currentInquiryItems = (websiteUser as any).inquiryItems || [];
       const updatedInquiryItems = currentInquiryItems
         .filter(item => item.id !== parseInt(productId))
         .map(item => item.id);
@@ -156,7 +156,7 @@ export default factories.createCoreController('api::website-user.website-user', 
       ctx.send({
         success: true,
         message: 'Product removed from inquiry list successfully',
-        data: updatedUser.inquiryItems || []
+        data: (updatedUser as any).inquiryItems || []
       });
     } catch (error) {
       console.error('Remove from inquiry error:', error);
@@ -187,9 +187,11 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       // 清空询价列表
-      await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { inquiryItems: { set: [] } }
-      });
+        await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
+         data: { 
+           inquiryItems: [] as any
+         }
+        });
 
       ctx.send({
         success: true,
@@ -256,7 +258,7 @@ export default factories.createCoreController('api::website-user.website-user', 
       console.log('📋 [Inquiry Sync] Valid product IDs:', validProductIds);
 
       // 合并本地询价列表和后端询价列表
-      const currentInquiryItems = websiteUser.inquiryItems || [];
+      const currentInquiryItems = (websiteUser as any).inquiryItems || [];
       const currentProductIds = currentInquiryItems.map(item => item.id);
       
       // 合并去重
@@ -264,7 +266,9 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       // 更新用户询价列表
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { inquiryItems: mergedProductIds }
+        data: { 
+          inquiryItems: mergedProductIds as any
+        }
       });
 
       // 重新获取更新后的数据
@@ -275,7 +279,7 @@ export default factories.createCoreController('api::website-user.website-user', 
       ctx.send({
         success: true,
         message: 'Inquiry list synced successfully',
-        data: updatedUser.inquiryItems || []
+        data: (updatedUser as any).inquiryItems || []
       });
     } catch (error) {
       console.error('Sync inquiries error:', error);
@@ -365,12 +369,12 @@ export default factories.createCoreController('api::website-user.website-user', 
         }))
       };
       
-      await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { 
-          inquiries: [...currentInquiries, newInquiryRecord],
-          inquiryItems: { set: [] } // 清空当前询价列表
-        }
-      });
+      await strapi.entityService.update('api::website-user.website-user', websiteUser.id, {
+          data: { 
+            inquiries: [...currentInquiries, newInquiryRecord],
+            inquiryItems: [] as any // 清空当前询价列表
+          }
+        });
 
       ctx.send({
         success: true,
