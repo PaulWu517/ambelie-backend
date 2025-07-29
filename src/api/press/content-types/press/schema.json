@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "press",
+  "info": {
+    "singularName": "press",
+    "pluralName": "press-items",
+    "displayName": "Press"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": false
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "pressType": {
+      "type": "string"
+    },
+    "date": {
+      "type": "date"
+    },
+    "introduction": {
+      "type": "string"
+    },
+    "content": {
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor"
+    },
+    "mainImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "showOnHomepage": {
+      "type": "boolean",
+      "default": false
+    },
+    "location": {
+      "type": "string"
+    }
+  }
+}
