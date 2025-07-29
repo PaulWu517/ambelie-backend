@@ -5,6 +5,7 @@ export default {
       path: '/inquiries',
       handler: 'inquiry.getInquiries',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -14,6 +15,7 @@ export default {
       path: '/inquiries/add',
       handler: 'inquiry.addToInquiry',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -23,6 +25,7 @@ export default {
       path: '/inquiries/remove/:productId',
       handler: 'inquiry.removeFromInquiry',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -32,6 +35,7 @@ export default {
       path: '/inquiries/clear',
       handler: 'inquiry.clearInquiries',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -41,6 +45,7 @@ export default {
       path: '/inquiries/sync',
       handler: 'inquiry.syncInquiries',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -50,6 +55,7 @@ export default {
       path: '/inquiries/submit',
       handler: 'inquiry.submitInquiry',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
