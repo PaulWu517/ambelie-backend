@@ -203,10 +203,11 @@ export default factories.createCoreController('api::website-user.website-user', 
         return ctx.unauthorized('Invalid or expired token');
       }
 
-      const { inquiryItems } = ctx.request.body;
+      const { inquirySlugs } = ctx.request.body;
+      console.log('🔄 [Inquiry Sync] Received inquiry slugs:', inquirySlugs);
 
-      if (!Array.isArray(inquiryItems)) {
-        return ctx.badRequest('Inquiry items must be an array');
+      if (!Array.isArray(inquirySlugs)) {
+        return ctx.badRequest('Inquiry slugs must be an array');
       }
 
       const websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId);
@@ -215,39 +216,44 @@ export default factories.createCoreController('api::website-user.website-user', 
         return ctx.unauthorized('User not found or inactive');
       }
 
-      // 验证所有产品是否存在
-      for (const item of inquiryItems) {
-        if (!item.productId) {
-          return ctx.badRequest('All inquiry items must have a productId');
+      // 根据slug查找产品并获取其ID
+      const validProductIds = [];
+      for (const slug of inquirySlugs) {
+        if (!slug) {
+          console.warn('⚠️ [Inquiry Sync] Empty slug found, skipping');
+          continue;
         }
-        const product = await strapi.entityService.findOne('api::product.product', item.productId);
-        if (!product) {
-          return ctx.badRequest(`Product with ID ${item.productId} not found`);
+        
+        const products = await strapi.entityService.findMany('api::product.product', {
+          filters: { slug: slug }
+        });
+        
+        if (products && products.length > 0) {
+          validProductIds.push(products[0].id);
+          console.log(`✅ [Inquiry Sync] Found product for slug ${slug}: ID ${products[0].id}`);
+        } else {
+          console.warn(`⚠️ [Inquiry Sync] Product not found for slug: ${slug}`);
         }
       }
+
+      console.log('📋 [Inquiry Sync] Valid product IDs:', validProductIds);
 
       // 合并本地询价列表和后端询价列表
       let serverInquiries = (websiteUser.inquiries as any[]) || [];
       const mergedInquiries = [...serverInquiries];
 
-      inquiryItems.forEach(localItem => {
-        const existingIndex = mergedInquiries.findIndex(item => item.productId === localItem.productId);
+      validProductIds.forEach(productId => {
+        const existingIndex = mergedInquiries.findIndex(item => item.productId === productId);
         if (existingIndex > -1) {
-          // 使用较新的时间戳
-          const serverItem = mergedInquiries[existingIndex];
-          const localTime = new Date(localItem.inquiryDate);
-          const serverTime = new Date(serverItem.inquiryDate);
-          
-          if (localTime > serverTime) {
-            mergedInquiries[existingIndex] = {
-              ...localItem,
-              inquiryDate: localItem.inquiryDate
-            };
-          }
+          // 更新询价时间
+          mergedInquiries[existingIndex] = {
+            ...mergedInquiries[existingIndex],
+            inquiryDate: new Date().toISOString()
+          };
         } else {
           mergedInquiries.push({
-            ...localItem,
-            inquiryDate: localItem.inquiryDate || new Date().toISOString()
+            productId: productId,
+            inquiryDate: new Date().toISOString()
           });
         }
       });
