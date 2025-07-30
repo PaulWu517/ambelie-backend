@@ -21,7 +21,7 @@
       "targetField": "name",
       "required": true
     },
-    "pressType": {
+    "media": {
       "type": "string"
     },
     "date": {
@@ -53,6 +53,10 @@
     },
     "location": {
       "type": "string"
+    },
+    "url": {
+      "type": "string",
+      "required": false
     }
   }
 }

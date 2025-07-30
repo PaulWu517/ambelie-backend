@@ -682,7 +682,12 @@ export interface ApiPressPress extends Struct.CollectionTypeSchema {
   };
   attributes: {
     content: Schema.Attribute.RichText &
-      Schema.Attribute.CustomField<'plugin::ckeditor5.CKEditor'>;
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'defaultHtml';
+        }
+      >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -693,8 +698,8 @@ export interface ApiPressPress extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     location: Schema.Attribute.String;
     mainImage: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    media: Schema.Attribute.String;
     name: Schema.Attribute.String & Schema.Attribute.Required;
-    pressType: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     showOnHomepage: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
@@ -702,6 +707,7 @@ export interface ApiPressPress extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    url: Schema.Attribute.String;
   };
 }
 
