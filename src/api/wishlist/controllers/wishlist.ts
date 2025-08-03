@@ -20,7 +20,12 @@ export default factories.createCoreController('api::website-user.website-user', 
       const websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
         populate: {
           wishlist: {
-            populate: ['main_image', 'category']
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
           }
         }
       }) as any;
@@ -103,7 +108,12 @@ export default factories.createCoreController('api::website-user.website-user', 
       const updatedUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
         populate: {
           wishlist: {
-            populate: ['main_image', 'category']
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
           }
         }
       }) as any;
@@ -167,7 +177,12 @@ export default factories.createCoreController('api::website-user.website-user', 
       const updatedUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
         populate: {
           wishlist: {
-            populate: ['main_image', 'category']
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
           }
         }
       }) as any;
@@ -300,15 +315,13 @@ export default factories.createCoreController('api::website-user.website-user', 
       const validProductIds = products.map(product => product.id);
       console.log('有效的产品IDs:', validProductIds);
 
-      // 合并本地收藏列表和后端收藏列表
-      const serverWishlistIds = (websiteUser.wishlist || []).map(item => item.id);
-      const mergedWishlistIds = [...new Set([...serverWishlistIds, ...validProductIds])];
-      console.log('合并后的收藏列表IDs:', mergedWishlistIds);
+      // 完全替换后端收藏列表（同步本地状态到后端）
+      console.log('将要设置的收藏列表IDs:', validProductIds);
 
       // 更新用户收藏列表
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
         data: {
-          wishlist: mergedWishlistIds as any
+          wishlist: validProductIds as any
         }
       });
 
