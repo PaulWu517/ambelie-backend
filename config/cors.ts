@@ -14,7 +14,9 @@ export default ({ env }) => ({
     'Origin',
     'Accept',
     'X-Requested-With',
-    'stripe-signature'
+    'stripe-signature',
+    'Cache-Control',
+    'Pragma'
   ],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   maxAge: 86400, // 24 hours
