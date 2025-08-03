@@ -18,7 +18,16 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       const websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
-        populate: ['inquiryItems']
+        populate: {
+          inquiryItems: {
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
+          }
+        }
       });
 
       if (!websiteUser || !websiteUser.isActive) {
@@ -63,7 +72,16 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       const websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
-        populate: ['inquiryItems']
+        populate: {
+          inquiryItems: {
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
+          }
+        }
       });
 
       if (!websiteUser || !websiteUser.isActive) {
@@ -93,7 +111,16 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       // 重新获取更新后的数据
       const updatedUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
-        populate: ['inquiryItems']
+        populate: {
+          inquiryItems: {
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
+          }
+        }
       });
 
       ctx.send({
@@ -130,7 +157,16 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       const websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
-        populate: ['inquiryItems']
+        populate: {
+          inquiryItems: {
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
+          }
+        }
       });
 
       if (!websiteUser || !websiteUser.isActive) {
@@ -150,7 +186,16 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       // 重新获取更新后的数据
       const updatedUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
-        populate: ['inquiryItems']
+        populate: {
+          inquiryItems: {
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
+          }
+        }
       });
 
       ctx.send({
@@ -326,7 +371,11 @@ export default factories.createCoreController('api::website-user.website-user', 
       const products = [];
       for (const productId of productIds) {
         const product = await strapi.entityService.findOne('api::product.product', productId, {
-          populate: ['main_image']
+          populate: {
+            main_image: {
+              populate: '*'
+            }
+          }
         });
         if (!product) {
           return ctx.badRequest(`Product with ID ${productId} not found`);
