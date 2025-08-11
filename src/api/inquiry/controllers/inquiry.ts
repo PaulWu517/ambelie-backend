@@ -273,7 +273,16 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       const websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
-        populate: ['inquiryItems']
+        populate: {
+          inquiryItems: {
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
+          }
+        }
       });
 
       if (!websiteUser || !websiteUser.isActive) {
@@ -318,7 +327,16 @@ export default factories.createCoreController('api::website-user.website-user', 
 
       // 重新获取更新后的数据
       const updatedUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
-        populate: ['inquiryItems']
+        populate: {
+          inquiryItems: {
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
+          }
+        }
       });
 
       ctx.send({

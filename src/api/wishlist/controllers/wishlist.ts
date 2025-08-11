@@ -329,7 +329,12 @@ export default factories.createCoreController('api::website-user.website-user', 
       const updatedUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId, {
         populate: {
           wishlist: {
-            populate: ['main_image', 'category']
+            populate: {
+              main_image: {
+                populate: '*'
+              },
+              category: true
+            }
           }
         }
       }) as any;

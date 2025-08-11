@@ -699,6 +699,7 @@ export interface ApiPressPress extends Struct.CollectionTypeSchema {
     location: Schema.Attribute.String;
     mainImage: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     media: Schema.Attribute.String;
+    mediaLogo: Schema.Attribute.Media<'images'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     showOnHomepage: Schema.Attribute.Boolean &

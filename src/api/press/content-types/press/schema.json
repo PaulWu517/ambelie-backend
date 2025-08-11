@@ -57,6 +57,13 @@
     "url": {
       "type": "string",
       "required": false
+    },
+    "mediaLogo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
     }
   }
 }

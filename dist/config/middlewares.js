@@ -12,6 +12,7 @@ exports.default = [
             origin: [
                 process.env.FRONTEND_URL || 'http://localhost:3000',
                 'https://ambelie-next-app-1-1.vercel.app',
+                'https://www.ambelie.com',
                 'https://*.vercel.app',
                 'http://localhost:3000',
                 'http://localhost:3001'
