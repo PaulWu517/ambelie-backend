@@ -38,6 +38,13 @@ TRANSFER_TOKEN_SALT=OIBDIiViWs25EQP4f5uH7g==
 JWT_SECRET=oWZMKsnLtFmcphjsVQFf2g==
 DATABASE_SSL=false
 FRONTEND_URL=https://your-frontend-domain.vercel.app
+
+# 腾讯云COS配置
+TENCENT_COS_SECRET_ID=your_secret_id_here
+TENCENT_COS_SECRET_KEY=your_secret_key_here
+TENCENT_COS_BUCKET=your_bucket_name_here
+TENCENT_COS_REGION=ap-guangzhou
+TENCENT_COS_CDN_DOMAIN=your_cdn_domain_here
 ```
 
 ### 4. 添加 PostgreSQL 数据库
@@ -69,4 +76,7 @@ npm run develop
 
 - 确保在 Railway 中设置正确的 `FRONTEND_URL` 以启用 CORS
 - 生产环境使用 PostgreSQL，开发环境使用 SQLite
-- 所有敏感信息都通过环境变量配置 
+- 所有敏感信息都通过环境变量配置
+- **文件存储**：项目已配置使用腾讯云COS进行文件存储，无需在Railway中配置Volume
+- **腾讯云COS配置**：确保在Railway环境变量中正确设置所有腾讯云COS相关配置
+- **CDN域名**：建议配置腾讯云CDN以提高文件访问速度和稳定性
