@@ -1,11 +1,23 @@
 export default () => {
+  // 新增：规范化 CDN 域名，确保包含协议且无尾斜杠
+  const normalizeBaseOrigin = (domain?: string) => {
+    if (!domain) return '';
+    let d = domain.trim();
+    if (d.endsWith('/')) d = d.slice(0, -1);
+    if (!/^https?:\/\//i.test(d)) d = `https://${d}`;
+    return d;
+  };
+  const RAW_CDN = process.env.TENCENT_COS_CDN_DOMAIN;
+  const BASE_ORIGIN = normalizeBaseOrigin(RAW_CDN) || `https://${process.env.TENCENT_COS_BUCKET}.cos.${process.env.TENCENT_COS_REGION}.myqcloud.com`;
+
   // 调试信息：打印腾讯云COS配置
   console.log('=== 腾讯云COS配置调试信息 ===');
   console.log('SecretId:', process.env.TENCENT_COS_SECRET_ID ? '已设置' : '未设置');
   console.log('SecretKey:', process.env.TENCENT_COS_SECRET_KEY ? '已设置' : '未设置');
   console.log('Bucket:', process.env.TENCENT_COS_BUCKET);
   console.log('Region:', process.env.TENCENT_COS_REGION);
-  console.log('CDN Domain:', process.env.TENCENT_COS_CDN_DOMAIN || '未设置，使用默认域名');
+  console.log('CDN Domain (raw):', RAW_CDN || '未设置');
+  console.log('BaseOrigin (final):', BASE_ORIGIN);
   console.log('================================');
 
   return {
@@ -23,20 +35,20 @@ export default () => {
           // 存储路径前缀
           BasePath: 'uploads/',
           // CDN域名（可选，如果配置了CDN加速）
-          BaseOrigin: process.env.TENCENT_COS_CDN_DOMAIN || `https://${process.env.TENCENT_COS_BUCKET}.cos.${process.env.TENCENT_COS_REGION}.myqcloud.com`,
+          BaseOrigin: BASE_ORIGIN,
         },
-      actionOptions: {
-        upload: {},
-        uploadStream: {},
-        delete: {},
+        actionOptions: {
+          upload: {},
+          uploadStream: {},
+          delete: {},
+        },
+        sizeLimit: 200 * 1024 * 1024, // 200MB
+        // 优化上传性能：精简图片多规格，仅保留常用的两档
+        breakpoints: {
+          medium: 900,
+          small: 500
+        },
       },
-      sizeLimit: 200 * 1024 * 1024, // 200MB
-      // 优化上传性能：精简图片多规格，仅保留常用的两档
-      breakpoints: {
-        medium: 900,
-        small: 500
-      },
-    },
     },
     'users-permissions': {
       config: {
