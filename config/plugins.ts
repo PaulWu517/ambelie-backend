@@ -31,12 +31,10 @@ export default () => {
         delete: {},
       },
       sizeLimit: 200 * 1024 * 1024, // 200MB
+      // 优化上传性能：精简图片多规格，仅保留常用的两档
       breakpoints: {
-        xlarge: 1920,
-        large: 1000,
-        medium: 750,
-        small: 500,
-        xsmall: 64
+        medium: 900,
+        small: 500
       },
     },
     },

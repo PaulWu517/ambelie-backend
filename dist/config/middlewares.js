@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const CDN_DOMAIN = process.env.TENCENT_COS_CDN_DOMAIN || 'https://media.ambelie.com';
 exports.default = [
     'strapi::logger',
     'global::error-handler', // 自定义错误处理中间件
@@ -13,8 +14,8 @@ exports.default = [
                 directives: {
                     'default-src': ["'self'"],
                     // 允许从腾讯云 COS 域名加载图片/媒体资源
-                    'img-src': ["'self'", 'data:', 'blob:', 'https://*.myqcloud.com', 'https://*.myqcloudimg.com'],
-                    'media-src': ["'self'", 'data:', 'blob:', 'https://*.myqcloud.com', 'https://*.myqcloudimg.com'],
+                    'img-src': ["'self'", 'data:', 'blob:', 'https://*.myqcloud.com', 'https://*.myqcloudimg.com', CDN_DOMAIN],
+                    'media-src': ["'self'", 'data:', 'blob:', 'https://*.myqcloud.com', 'https://*.myqcloudimg.com', CDN_DOMAIN],
                     // 本地开发时允许 http 连接
                     'connect-src': ["'self'", 'https:', 'http:'],
                     // 关闭自动把 http 升级为 https，避免本地开发报错
