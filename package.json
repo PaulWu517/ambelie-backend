@@ -12,7 +12,8 @@
     "start": "strapi start",
     "strapi": "strapi",
     "upgrade": "npx @strapi/upgrade latest",
-    "upgrade:dry": "npx @strapi/upgrade latest --dry"
+    "upgrade:dry": "npx @strapi/upgrade latest --dry",
+    "migrate:media": "node ./scripts/migrate-media-to-cos.js"
   },
   "dependencies": {
     "@_sh/strapi-plugin-ckeditor": "^6.0.2",
@@ -21,8 +22,9 @@
     "@strapi/provider-email-sendgrid": "^5.20.0",
     "@strapi/strapi": "5.14.0",
     "better-sqlite3": "11.3.0",
+    "cos-nodejs-sdk-v5": "^2.15.4",
     "lucide-react": "^0.513.0",
-    "pg": "^8.16.0",
+    "pg": "^8.16.3",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0",

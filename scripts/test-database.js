@@ -27,15 +27,15 @@ async function testDatabaseConnection() {
   let dbConfig;
   try {
     const url = new URL(process.env.DATABASE_URL);
+    const useSSL = (process.env.DATABASE_SSL || 'false').toLowerCase() === 'true';
+    const rejectUnauthorized = (process.env.DATABASE_SSL_REJECT_UNAUTHORIZED || 'false').toLowerCase() === 'true';
     dbConfig = {
       host: url.hostname,
       port: parseInt(url.port) || 5432,
       database: url.pathname.slice(1),
       user: url.username,
       password: url.password,
-      ssl: process.env.NODE_ENV === 'production' ? {
-        rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'true'
-      } : false
+      ssl: useSSL ? { rejectUnauthorized } : false
     };
     
     console.log('🔗 数据库配置:');
