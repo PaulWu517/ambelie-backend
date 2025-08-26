@@ -46,10 +46,11 @@ exports.default = () => {
                     delete: {},
                 },
                 sizeLimit: 200 * 1024 * 1024, // 200MB
-                // 优化上传性能：精简图片多规格，仅保留常用的两档
+                // 平衡性能与管理端预览：恢复 thumbnail，并保留 medium/small
                 breakpoints: {
+                    thumbnail: 245,
                     medium: 900,
-                    small: 500
+                    small: 500,
                 },
             },
         },
