@@ -17,6 +17,46 @@ export default {
    * run jobs, or perform some special logic.
    */
   bootstrap({ strapi }) {
+    // 订阅 upload 文件模型的生命周期日志，确保在所有环境都能看到（包括生产）
+    strapi.db.lifecycles.subscribe({
+      models: ['plugin::upload.file'],
+      async afterCreate(event) {
+        try {
+          const { result } = event as any;
+          const id = result?.id;
+          const url = result?.url;
+          const name = result?.name;
+          const mime = result?.mime;
+          const size = result?.size;
+          const formats = result?.formats || {};
+          const formatKeys = Object.keys(formats);
+          const formatUrls = Object.fromEntries(
+            Object.entries(formats).map(([k, v]: any) => [k, (v as any)?.url])
+          );
+          strapi.log.info(`Upload lifecycle afterCreate -> id:${id} name:${name} mime:${mime} size:${size}`);
+          strapi.log.info(`Upload lifecycle afterCreate -> url:${url} formats:${formatKeys.join(',') || 'none'}`);
+          strapi.log.info(`Upload lifecycle afterCreate -> format urls:${JSON.stringify(formatUrls)}`);
+        } catch (err) {
+          strapi.log.error('Upload lifecycle afterCreate log error:', err);
+        }
+      },
+      async afterUpdate(event) {
+        try {
+          const { result } = event as any;
+          const id = result?.id;
+          const formats = result?.formats || {};
+          const formatKeys = Object.keys(formats);
+          const formatUrls = Object.fromEntries(
+            Object.entries(formats).map(([k, v]: any) => [k, (v as any)?.url])
+          );
+          strapi.log.info(`Upload lifecycle afterUpdate -> id:${id} formats:${formatKeys.join(',') || 'none'}`);
+          strapi.log.info(`Upload lifecycle afterUpdate -> format urls:${JSON.stringify(formatUrls)}`);
+        } catch (err) {
+          strapi.log.error('Upload lifecycle afterUpdate log error:', err);
+        }
+      },
+    });
+
     // 在服务器启动后添加原始的Stripe webhook处理器
     strapi.server.httpServer.on('listening', () => {
       strapi.log.info('添加Stripe webhook处理器');
