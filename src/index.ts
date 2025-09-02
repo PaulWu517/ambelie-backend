@@ -57,6 +57,67 @@ export default {
       },
     });
 
+    // 新增：自动发送管理员邀请邮件
+    strapi.db.lifecycles.subscribe({
+      models: ['admin::user'],
+      async afterCreate(event) {
+        try {
+          const { result } = event as any;
+          const email = result?.email;
+          const registrationToken = result?.registrationToken;
+          const isActive = result?.isActive;
+
+          // 仅在存在 registrationToken（通过“Invite new user”创建）且未激活时发送
+          if (!registrationToken || isActive) {
+            return;
+          }
+
+          // 计算 Admin 基础地址
+          const host = process.env.HOST || 'localhost';
+          const port = process.env.PORT || '1337';
+          const serverUrl = process.env.PUBLIC_URL || process.env.SERVER_URL || `http://${host}:${port}`;
+          const adminBaseUrl = process.env.ADMIN_URL || `${serverUrl}/admin`;
+          const registerUrl = `${adminBaseUrl}/auth/register?registrationToken=${encodeURIComponent(registrationToken)}`;
+
+          // 邮件参数
+          const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+          const subject = `You've been invited to Ambelie Admin`;
+          const html = `
+            <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#333">
+              <h2>Ambelie 管理后台邀请</h2>
+              <p>您好，您已被邀请加入 Ambelie 管理后台。</p>
+              <p>请点击以下链接完成账户设置：</p>
+              <p><a href="${registerUrl}" target="_blank" rel="noopener">完成注册</a></p>
+              <p>如果按钮无法打开，请复制以下链接到浏览器中打开：</p>
+              <p style="word-break:break-all;color:#555">${registerUrl}</p>
+              <hr />
+              <p style="font-size:12px;color:#888">此链接仅用于首次设置您的管理员账户。</p>
+            </div>`;
+          const text = `您已被邀请加入 Ambelie 管理后台。请打开以下链接完成注册：\n${registerUrl}`;
+
+          if (!email) {
+            strapi.log.warn('admin::user afterCreate -> 邀请对象缺少 email，跳过发送邀请邮件');
+            return;
+          }
+
+          strapi.log.info(`准备发送管理员邀请邮件 -> to:${email}`);
+
+          // 通过 Email 插件发送
+          await (strapi as any).plugin('email').service('email').send({
+            to: email,
+            from,
+            subject,
+            text,
+            html,
+          });
+
+          strapi.log.info(`管理员邀请邮件已发送 -> ${email}`);
+        } catch (err) {
+          strapi.log.error('发送管理员邀请邮件失败:', err);
+        }
+      },
+    });
+
     // 在服务器启动后添加原始的Stripe webhook处理器
     strapi.server.httpServer.on('listening', () => {
       strapi.log.info('添加Stripe webhook处理器');
@@ -86,14 +147,14 @@ export default {
             }
             
             // 读取原始body
-            const chunks = [];
+            const chunks = [] as any[];
             
-            for await (const chunk of ctx.req) {
+            for await (const chunk of ctx.req as any) {
               chunks.push(chunk);
             }
             
             const rawBody = Buffer.concat(chunks);
-            const signature = ctx.request.headers['stripe-signature'];
+            const signature = (ctx.request.headers['stripe-signature'] as any);
             
             strapi.log.info('Webhook处理器：读取body成功，长度:', rawBody.length);
             strapi.log.info('Webhook处理器：签名存在:', !!signature);
@@ -134,7 +195,7 @@ export default {
             ctx.status = 200;
             ctx.body = { received: true };
             
-          } catch (error) {
+          } catch (error: any) {
             strapi.log.error('Webhook处理器错误:', error);
             ctx.status = 400;
             ctx.body = { error: error.message };
@@ -148,7 +209,7 @@ export default {
       });
       
       // 重新添加现有中间件
-      existingMiddleware.forEach(middleware => {
+      existingMiddleware.forEach((middleware: any) => {
         koaApp.use(middleware);
       });
       

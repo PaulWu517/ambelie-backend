@@ -66,5 +66,23 @@ exports.default = () => {
             },
             enabled: true,
         },
+        email: {
+            config: {
+                provider: 'nodemailer',
+                providerOptions: {
+                    host: process.env.SMTP_HOST || 'smtp.qq.com',
+                    port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465,
+                    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : true,
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS,
+                    },
+                },
+                settings: {
+                    defaultFrom: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+                    defaultReplyTo: process.env.EMAIL_REPLY_TO || process.env.EMAIL_USER,
+                },
+            },
+        },
     };
 };

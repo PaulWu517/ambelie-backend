@@ -384,6 +384,11 @@ export interface ApiAuthAuth extends Struct.SingleTypeSchema {
   options: {
     draftAndPublish: false;
   };
+  pluginOptions: {
+    'content-manager': {
+      visible: false;
+    };
+  };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -727,6 +732,10 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    currencyKeyword: Schema.Attribute.Enumeration<
+      ['CNY', 'USD', 'EUR', 'GBP', 'JPY', 'HKD']
+    > &
+      Schema.Attribute.DefaultTo<'CNY'>;
     description: Schema.Attribute.Text;
     designer: Schema.Attribute.String;
     dimensions: Schema.Attribute.String;

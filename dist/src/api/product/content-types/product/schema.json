@@ -89,6 +89,11 @@
         "materials": {
             "type": "string"
         },
+        "currencyKeyword": {
+            "type": "enumeration",
+            "enum": ["CNY", "USD", "EUR", "GBP", "JPY", "HKD"],
+            "default": "CNY"
+        },
         "orderItems": {
             "type": "relation",
             "relation": "oneToMany",
