@@ -466,7 +466,8 @@ export interface ApiExhibitionExhibition extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'Exhibition'>;
     images: Schema.Attribute.Media<'images', true>;
-    introduction: Schema.Attribute.Text;
+    introduction: Schema.Attribute.Text &
+      Schema.Attribute.CustomField<'global::word-count-textarea'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -487,6 +488,7 @@ export interface ApiExhibitionExhibition extends Struct.CollectionTypeSchema {
     showOnHomepage: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<false>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    specialThanks: Schema.Attribute.Text;
     startDate: Schema.Attribute.Date & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -697,7 +699,13 @@ export interface ApiPressPress extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     date: Schema.Attribute.Date;
-    introduction: Schema.Attribute.String;
+    introduction: Schema.Attribute.Text &
+      Schema.Attribute.CustomField<
+        'global::word-count-textarea',
+        {
+          maxWords: 70;
+        }
+      >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::press.press'> &
       Schema.Attribute.Private;
@@ -797,7 +805,13 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     date: Schema.Attribute.Date;
-    introduction: Schema.Attribute.String;
+    introduction: Schema.Attribute.Text &
+      Schema.Attribute.CustomField<
+        'global::word-count-textarea',
+        {
+          maxWords: 70;
+        }
+      >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

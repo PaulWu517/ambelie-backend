@@ -15,7 +15,32 @@ export default {
       dark: {},
     },
   },
+  register(app: StrapiApp) {
+    // 注册全局自定义字段：带实时字数统计与上限的文本域
+    app.customFields.register({
+      name: 'word-count-textarea',
+      type: 'text',
+      intlLabel: {
+        id: 'custom.word-count-textarea.label',
+        defaultMessage: '带字数统计的文本',
+      },
+      intlDescription: {
+        id: 'custom.word-count-textarea.description',
+        defaultMessage: '实时显示字数并限制最大字数（默认100）',
+      },
+      components: {
+        Input: async () =>
+          import('./components/WordCountTextarea/Input').then((m) => ({
+            // 断言为通用的 ComponentType 以避免 props 类型不匹配报错
+            default: m.default as any,
+          })),
+      },
+      options: {
+        // 允许在Content-Type Builder中配置（如需要可扩展）
+      },
+    });
+  },
   bootstrap(app: StrapiApp) {
     console.log('Strapi admin app bootstrapped');
   },
-}; 
+};

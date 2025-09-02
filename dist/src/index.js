@@ -8,7 +8,19 @@ exports.default = {
      *
      * This gives you an opportunity to extend code.
      */
-    register( /*{ strapi }*/) { },
+    register({ strapi }) {
+        // 注册服务端自定义字段（与admin的 app.customFields.register 配套）
+        // 名称需与admin端一致：global::word-count-textarea
+        strapi.customFields.register({
+            name: 'word-count-textarea',
+            // 不指定 plugin，表示全局自定义字段，对应 schema 中的 "global::word-count-textarea"
+            type: 'text',
+            inputSize: {
+                default: 12,
+                isResizable: true,
+            },
+        });
+    },
     /**
      * An asynchronous bootstrap function that runs before
      * your application gets started.
@@ -51,60 +63,6 @@ exports.default = {
                 }
                 catch (err) {
                     strapi.log.error('Upload lifecycle afterUpdate log error:', err);
-                }
-            },
-        });
-        // 新增：自动发送管理员邀请邮件
-        strapi.db.lifecycles.subscribe({
-            models: ['admin::user'],
-            async afterCreate(event) {
-                try {
-                    const { result } = event;
-                    const email = result === null || result === void 0 ? void 0 : result.email;
-                    const registrationToken = result === null || result === void 0 ? void 0 : result.registrationToken;
-                    const isActive = result === null || result === void 0 ? void 0 : result.isActive;
-                    // 仅在存在 registrationToken（通过“Invite new user”创建）且未激活时发送
-                    if (!registrationToken || isActive) {
-                        return;
-                    }
-                    // 计算 Admin 基础地址
-                    const host = process.env.HOST || 'localhost';
-                    const port = process.env.PORT || '1337';
-                    const serverUrl = process.env.PUBLIC_URL || process.env.SERVER_URL || `http://${host}:${port}`;
-                    const adminBaseUrl = process.env.ADMIN_URL || `${serverUrl}/admin`;
-                    const registerUrl = `${adminBaseUrl}/auth/register?registrationToken=${encodeURIComponent(registrationToken)}`;
-                    // 邮件参数
-                    const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
-                    const subject = `You've been invited to Ambelie Admin`;
-                    const html = `
-            <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#333">
-              <h2>Ambelie 管理后台邀请</h2>
-              <p>您好，您已被邀请加入 Ambelie 管理后台。</p>
-              <p>请点击以下链接完成账户设置：</p>
-              <p><a href="${registerUrl}" target="_blank" rel="noopener">完成注册</a></p>
-              <p>如果按钮无法打开，请复制以下链接到浏览器中打开：</p>
-              <p style="word-break:break-all;color:#555">${registerUrl}</p>
-              <hr />
-              <p style="font-size:12px;color:#888">此链接仅用于首次设置您的管理员账户。</p>
-            </div>`;
-                    const text = `您已被邀请加入 Ambelie 管理后台。请打开以下链接完成注册：\n${registerUrl}`;
-                    if (!email) {
-                        strapi.log.warn('admin::user afterCreate -> 邀请对象缺少 email，跳过发送邀请邮件');
-                        return;
-                    }
-                    strapi.log.info(`准备发送管理员邀请邮件 -> to:${email}`);
-                    // 通过 Email 插件发送
-                    await strapi.plugin('email').service('email').send({
-                        to: email,
-                        from,
-                        subject,
-                        text,
-                        html,
-                    });
-                    strapi.log.info(`管理员邀请邮件已发送 -> ${email}`);
-                }
-                catch (err) {
-                    strapi.log.error('发送管理员邀请邮件失败:', err);
                 }
             },
         });
@@ -181,7 +139,7 @@ exports.default = {
                 await next();
             });
             // 重新添加现有中间件
-            existingMiddleware.forEach((middleware) => {
+            existingMiddleware.forEach(middleware => {
                 koaApp.use(middleware);
             });
             strapi.log.info('Stripe webhook处理器添加完成');

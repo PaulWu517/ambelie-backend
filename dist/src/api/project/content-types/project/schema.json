@@ -28,7 +28,10 @@
             "type": "date"
         },
         "introduction": {
-            "type": "string"
+            "type": "customField",
+            "customField": "global::word-count-textarea",
+            "required": false,
+            "options": { "maxWords": 70 }
         },
         "content": {
             "type": "customField",
