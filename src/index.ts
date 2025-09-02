@@ -79,6 +79,14 @@ export default {
           const adminBaseUrl = process.env.ADMIN_URL || `${serverUrl}/admin`;
           const registerUrl = `${adminBaseUrl}/auth/register?registrationToken=${encodeURIComponent(registrationToken)}`;
 
+          // 新增：可通过环境变量禁用管理员邀请邮件发送（默认禁用）
+          const inviteEmailEnabled = String(process.env.ADMIN_INVITE_EMAIL_ENABLED || 'false').toLowerCase() === 'true';
+          if (!inviteEmailEnabled) {
+            strapi.log.info(`管理员邀请邮件功能已禁用，已生成注册链接（请手动发送） -> to:${email}`);
+            strapi.log.info(`注册链接: ${registerUrl}`);
+            return;
+          }
+
           // 邮件参数
           const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
           const subject = `You've been invited to Ambelie Admin`;
