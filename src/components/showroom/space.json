@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_showroom_spaces",
+  "info": {
+    "displayName": "space",
+    "description": "A space/section within a showroom, with title, subtitle, description and images"
+  },
+  "options": {},
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "subtitle": { "type": "string" },
+    "description": { "type": "text" },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": ["images"]
+    }
+  }
+}

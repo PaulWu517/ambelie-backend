@@ -832,6 +832,43 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiShowroomShowroom extends Struct.CollectionTypeSchema {
+  collectionName: 'showrooms';
+  info: {
+    displayName: 'Showroom';
+    pluralName: 'showrooms';
+    singularName: 'showroom';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    address: Schema.Attribute.String;
+    city: Schema.Attribute.Enumeration<['Shanghai', 'Hangzhou']> &
+      Schema.Attribute.Required;
+    contactInfo: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    heroDescription: Schema.Attribute.RichText;
+    heroImage: Schema.Attribute.Media<'images'>;
+    hours: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::showroom.showroom'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    spaces: Schema.Attribute.Component<'showroom.space', true>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiWebsiteUserWebsiteUser extends Struct.CollectionTypeSchema {
   collectionName: 'website_users';
   info: {
@@ -1412,6 +1449,7 @@ declare module '@strapi/strapi' {
       'api::press.press': ApiPressPress;
       'api::product.product': ApiProductProduct;
       'api::project.project': ApiProjectProject;
+      'api::showroom.showroom': ApiShowroomShowroom;
       'api::website-user.website-user': ApiWebsiteUserWebsiteUser;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
