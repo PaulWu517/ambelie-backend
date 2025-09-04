@@ -844,7 +844,9 @@ export interface ApiShowroomShowroom extends Struct.CollectionTypeSchema {
   };
   attributes: {
     address: Schema.Attribute.String;
-    city: Schema.Attribute.Enumeration<['Shanghai', 'Hangzhou']> &
+    city: Schema.Attribute.Enumeration<
+      ['Shanghai', 'Hangzhou', 'About AMBELIE']
+    > &
       Schema.Attribute.Required;
     contactInfo: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
