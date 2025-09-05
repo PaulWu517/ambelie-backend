@@ -496,6 +496,63 @@ export interface ApiExhibitionExhibition extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiOperationLogOperationLog
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'operation_logs';
+  info: {
+    description: 'Audit trail for content changes';
+    displayName: 'Operation Log';
+    pluralName: 'operation-logs';
+    singularName: 'operation-log';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  pluginOptions: {
+    'content-manager': {
+      visible: true;
+    };
+    'content-type-builder': {
+      visible: true;
+    };
+  };
+  attributes: {
+    action: Schema.Attribute.Enumeration<['create', 'update', 'delete']> &
+      Schema.Attribute.Required;
+    actorEmail: Schema.Attribute.String;
+    actorName: Schema.Attribute.String;
+    changedFields: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    dataAfter: Schema.Attribute.JSON;
+    dataBefore: Schema.Attribute.JSON;
+    docKey: Schema.Attribute.String;
+    entryId: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetPluginOptions<{
+        'content-manager': {
+          visible: false;
+        };
+      }>;
+    entryName: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::operation-log.operation-log'
+    > &
+      Schema.Attribute.Private;
+    modelName: Schema.Attribute.String & Schema.Attribute.Required;
+    modelUid: Schema.Attribute.String & Schema.Attribute.Required;
+    opTime: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiOrderItemOrderItem extends Struct.CollectionTypeSchema {
   collectionName: 'order_items';
   info: {
@@ -806,12 +863,7 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     date: Schema.Attribute.Date;
     introduction: Schema.Attribute.Text &
-      Schema.Attribute.CustomField<
-        'global::word-count-textarea',
-        {
-          maxWords: 70;
-        }
-      >;
+      Schema.Attribute.CustomField<'global::word-count-textarea'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -820,7 +872,9 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     location: Schema.Attribute.String;
     mainImage: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
-    name: Schema.Attribute.String & Schema.Attribute.Required;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     projectType: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     showOnHomepage: Schema.Attribute.Boolean &
@@ -1445,6 +1499,7 @@ declare module '@strapi/strapi' {
       'api::auth.auth': ApiAuthAuth;
       'api::category.category': ApiCategoryCategory;
       'api::exhibition.exhibition': ApiExhibitionExhibition;
+      'api::operation-log.operation-log': ApiOperationLogOperationLog;
       'api::order-item.order-item': ApiOrderItemOrderItem;
       'api::order.order': ApiOrderOrder;
       'api::payment.payment': ApiPaymentPayment;

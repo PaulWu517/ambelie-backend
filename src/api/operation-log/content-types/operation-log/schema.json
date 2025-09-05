@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "operation_logs",
+  "info": {
+    "singularName": "operation-log",
+    "pluralName": "operation-logs",
+    "displayName": "Operation Log",
+    "description": "Audit trail for content changes"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-type-builder": { "visible": true },
+    "content-manager": { "visible": true }
+  },
+  "attributes": {
+    "action": { "type": "enumeration", "enum": ["create", "update", "delete"], "required": true },
+    "modelUid": { "type": "string", "required": true },
+    "modelName": { "type": "string", "required": true },
+    "entryId": { "type": "integer", "required": true, "private": true, "pluginOptions": { "content-manager": { "visible": false } } },
+    "docKey": { "type": "string" },
+    "entryName": { "type": "string" },
+    "opTime": { "type": "datetime", "required": true },
+
+    "actorEmail": { "type": "string" },
+    "actorName": { "type": "string" },
+
+    "changedFields": { "type": "json", "default": [] },
+    "dataBefore": { "type": "json" },
+    "dataAfter": { "type": "json" }
+  }
+}

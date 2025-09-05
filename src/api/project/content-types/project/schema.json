@@ -14,7 +14,7 @@
     "name": {
       "type": "string",
       "required": true,
-      "unique": false
+      "unique": true
     },
     "slug": {
       "type": "uid",
@@ -29,9 +29,7 @@
     },
     "introduction": {
       "type": "customField",
-      "customField": "global::word-count-textarea",
-      "required": false,
-      "options": { "maxWords": 70 }
+      "customField": "global::word-count-textarea"
     },
     "content": {
       "type": "customField",
