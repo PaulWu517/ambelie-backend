@@ -467,7 +467,12 @@ export interface ApiExhibitionExhibition extends Struct.CollectionTypeSchema {
       Schema.Attribute.DefaultTo<'Exhibition'>;
     images: Schema.Attribute.Media<'images', true>;
     introduction: Schema.Attribute.Text &
-      Schema.Attribute.CustomField<'global::word-count-textarea'>;
+      Schema.Attribute.CustomField<
+        'global::word-count-textarea',
+        {
+          maxChars: 500;
+        }
+      >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -760,7 +765,7 @@ export interface ApiPressPress extends Struct.CollectionTypeSchema {
       Schema.Attribute.CustomField<
         'global::word-count-textarea',
         {
-          maxWords: 70;
+          maxChars: 500;
         }
       >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -863,7 +868,12 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     date: Schema.Attribute.Date;
     introduction: Schema.Attribute.Text &
-      Schema.Attribute.CustomField<'global::word-count-textarea'>;
+      Schema.Attribute.CustomField<
+        'global::word-count-textarea',
+        {
+          maxChars: 500;
+        }
+      >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

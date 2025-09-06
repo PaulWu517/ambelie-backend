@@ -62,7 +62,8 @@
         },
         "introduction": {
             "type": "customField",
-            "customField": "global::word-count-textarea"
+            "customField": "global::word-count-textarea",
+            "options": { "maxChars": 500 }
         },
         "description": {
             "type": "richtext",

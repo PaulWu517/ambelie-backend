@@ -490,7 +490,7 @@ export default {
         const id = getSingleId((event as any).params?.where);
         if (!uid || !id) return;
         try {
-          const before = await strapi.entityService.findOne(uid, id, { populate: {} });
+          const before = await strapi.entityService.findOne(uid, id, { populate: { '*': true } });
           const ctx = getCtx();
           if (ctx) {
             ctx.state = ctx.state || {};
@@ -638,9 +638,9 @@ export default {
         const modelName = MODEL_DISPLAY_NAME[uid] || uid;
 
         const entryName = getEntryName(before);
-        const keys = sanitizeKeys(['name', 'title', 'slug']);
-        const dataBefore = before ? pick(before, keys.filter(k => before?.[k] != null)) : null;
-
+        const keys = sanitizeKeys(Object.keys(before || {}));
+        const dataBefore = before ? pick(before, keys) : null;
+ 
         strapi.log.debug(`[AUDIT] afterDelete -> ${uid}#${id}`);
         await logOperation({
           action: 'delete',
@@ -652,7 +652,7 @@ export default {
            ...actor,
            dataBefore,
            dataAfter: null,
-           changedFields: keys.filter(k => before?.[k] != null),
+           changedFields: keys,
         });
       },
     });
