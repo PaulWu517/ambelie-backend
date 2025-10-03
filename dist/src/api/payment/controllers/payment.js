@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.handlePaymentFailed = exports.handlePaymentSucceeded = exports.handleCheckoutSessionCompleted = void 0;
 const strapi_1 = require("@strapi/strapi");
 const stripe_1 = require("../../../services/stripe");
 // 处理支付会话完成
@@ -139,6 +140,7 @@ async function handleCheckoutSessionCompleted(session, strapi) {
         strapi.log.error('处理支付会话完成事件失败:', error);
     }
 }
+exports.handleCheckoutSessionCompleted = handleCheckoutSessionCompleted;
 // 处理支付成功
 async function handlePaymentSucceeded(paymentIntent, strapi) {
     try {
@@ -188,6 +190,7 @@ async function handlePaymentSucceeded(paymentIntent, strapi) {
         strapi.log.error('处理支付成功事件失败:', error);
     }
 }
+exports.handlePaymentSucceeded = handlePaymentSucceeded;
 // 处理支付失败
 async function handlePaymentFailed(paymentIntent, strapi) {
     var _a;
@@ -239,6 +242,7 @@ async function handlePaymentFailed(paymentIntent, strapi) {
         strapi.log.error('处理支付失败事件失败:', error);
     }
 }
+exports.handlePaymentFailed = handlePaymentFailed;
 exports.default = strapi_1.factories.createCoreController('api::payment.payment', ({ strapi }) => ({
     // 获取支付记录列表（带分页和过滤）
     async find(ctx) {

@@ -47,6 +47,7 @@ export const createCheckoutSession = async (params: {
 
     // 创建checkout session
     const session = await stripe.checkout.sessions.create({
+      // 保留信用卡（Apple Pay/Google Pay 会在满足条件时随卡自动出现）
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
@@ -62,6 +63,24 @@ export const createCheckoutSession = async (params: {
         metadata: {
           customerName,
           ...metadata,
+        },
+      },
+      // 开启在结账完成后自动生成发票（Paid Invoice）
+      // Stripe 会在支付成功后创建并标记为已支付的发票；
+      // 客户邮件发送由仪表盘的“Customer emails”开关控制。
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          description: 'Order invoice',
+          // 将 checkout 的元数据透传到发票，便于后续对账
+          metadata: {
+            customerName,
+            ...metadata,
+          },
+          // 如果在环境变量中配置了账户税号，可附加到发票上（部分地区税务合规需要）
+          ...(process.env.ACCOUNT_TAX_ID
+            ? { account_tax_ids: [process.env.ACCOUNT_TAX_ID] }
+            : {}),
         },
       },
       shipping_address_collection: {
