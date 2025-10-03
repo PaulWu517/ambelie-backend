@@ -50,6 +50,7 @@ export default {
       path: '/cart/sync',
       handler: 'cart.syncCart',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
