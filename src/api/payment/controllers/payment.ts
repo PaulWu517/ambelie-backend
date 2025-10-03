@@ -258,6 +258,9 @@ async function handlePaymentFailed(paymentIntent, strapi) {
   }
 }
  
+// 导出用于自定义Webhook中间件直接调用的处理函数
+export { handleCheckoutSessionCompleted, handlePaymentSucceeded, handlePaymentFailed };
+
 export default factories.createCoreController('api::payment.payment', ({ strapi }) => ({
   
   // 获取支付记录列表（带分页和过滤）

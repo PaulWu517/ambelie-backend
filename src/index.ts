@@ -123,21 +123,21 @@ export default {
             
             strapi.log.info('Webhook处理器：签名验证成功，事件类型:', event.type);
             
-            // 处理事件
-            const paymentController = strapi.controllers['api::payment.payment'];
+            // 处理事件：直接使用控制器文件中的命名导出函数（显式传入 strapi）
+            const { handleCheckoutSessionCompleted, handlePaymentSucceeded, handlePaymentFailed } = require('./api/payment/controllers/payment');
             
             switch (event.type) {
               case 'checkout.session.completed':
                 strapi.log.info('处理checkout.session.completed事件');
-                await paymentController.handleCheckoutSessionCompleted(event.data.object);
+                await handleCheckoutSessionCompleted(event.data.object, strapi);
                 break;
               case 'payment_intent.succeeded':
                 strapi.log.info('处理payment_intent.succeeded事件');
-                await paymentController.handlePaymentSucceeded(event.data.object);
+                await handlePaymentSucceeded(event.data.object, strapi);
                 break;
               case 'payment_intent.payment_failed':
                 strapi.log.info('处理payment_intent.payment_failed事件');
-                await paymentController.handlePaymentFailed(event.data.object);
+                await handlePaymentFailed(event.data.object, strapi);
                 break;
               default:
                 strapi.log.info('未处理的事件类型:', event.type);
