@@ -19,16 +19,6 @@ export default {
         isResizable: true,
       },
     });
-
-    // 注册层级分类选择器
-    strapi.customFields.register({
-      name: 'hierarchical-category-select',
-      type: 'integer',
-      inputSize: {
-        default: 12,
-        isResizable: false,
-      },
-    });
   },
 
   /**
@@ -133,25 +123,21 @@ export default {
             
             strapi.log.info('Webhook处理器：签名验证成功，事件类型:', event.type);
             
-            // 处理事件：直接调用控制器文件内的命名导出函数，显式传入 strapi
-            const {
-              handleCheckoutSessionCompleted,
-              handlePaymentSucceeded,
-              handlePaymentFailed,
-            } = require('./api/payment/controllers/payment');
-
+            // 处理事件
+            const paymentController = strapi.controllers['api::payment.payment'];
+            
             switch (event.type) {
               case 'checkout.session.completed':
                 strapi.log.info('处理checkout.session.completed事件');
-                await handleCheckoutSessionCompleted(event.data.object, strapi);
+                await paymentController.handleCheckoutSessionCompleted(event.data.object);
                 break;
               case 'payment_intent.succeeded':
                 strapi.log.info('处理payment_intent.succeeded事件');
-                await handlePaymentSucceeded(event.data.object, strapi);
+                await paymentController.handlePaymentSucceeded(event.data.object);
                 break;
               case 'payment_intent.payment_failed':
                 strapi.log.info('处理payment_intent.payment_failed事件');
-                await handlePaymentFailed(event.data.object, strapi);
+                await paymentController.handlePaymentFailed(event.data.object);
                 break;
               default:
                 strapi.log.info('未处理的事件类型:', event.type);

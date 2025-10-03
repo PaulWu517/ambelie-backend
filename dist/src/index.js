@@ -20,15 +20,6 @@ exports.default = {
                 isResizable: true,
             },
         });
-        // 注册层级分类选择器
-        strapi.customFields.register({
-            name: 'hierarchical-category-select',
-            type: 'integer',
-            inputSize: {
-                default: 12,
-                isResizable: false,
-            },
-        });
     },
     /**
      * An asynchronous bootstrap function that runs before

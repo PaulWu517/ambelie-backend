@@ -39,29 +39,6 @@ export default {
         // 允许在Content-Type Builder中配置（如需要可扩展）
       },
     });
-
-    // 注册层级分类选择器
-    app.customFields.register({
-      name: 'hierarchical-category-select',
-      type: 'integer',
-      intlLabel: {
-        id: 'custom.hierarchical-category-select.label',
-        defaultMessage: '层级分类选择器',
-      },
-      intlDescription: {
-        id: 'custom.hierarchical-category-select.description',
-        defaultMessage: '支持多层级展开的分类选择器',
-      },
-      components: {
-        Input: async () =>
-          import('./components/HierarchicalCategorySelect/Input').then((m) => ({
-            default: m.default as any,
-          })),
-      },
-      options: {
-        // 可以在这里添加配置选项
-      },
-    });
   },
   bootstrap(app: StrapiApp) {
     console.log('Strapi admin app bootstrapped');
