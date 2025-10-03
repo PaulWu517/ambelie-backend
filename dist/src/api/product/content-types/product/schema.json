@@ -66,6 +66,10 @@
             "type": "string"
         },
         "category": {
+            "type": "customField",
+            "customField": "global::hierarchical-category-select"
+        },
+        "categoryRelation": {
             "type": "relation",
             "relation": "manyToOne",
             "target": "api::category.category",
