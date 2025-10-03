@@ -198,7 +198,8 @@ export default factories.createCoreController('api::website-user.website-user', 
       }
 
       let cart = (websiteUser.cart as any[]) || [];
-      cart = cart.filter(item => item.productId !== productId);
+      // 统一比较为字符串，避免数字与字符串不相等导致无法删除
+      cart = cart.filter(item => item.productId?.toString() !== productId?.toString());
 
       // 更新用户购物车
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
@@ -282,7 +283,8 @@ export default factories.createCoreController('api::website-user.website-user', 
         return ctx.unauthorized('User not found or inactive');
       }
 
-      // 验证所有产品是否存在
+      // 验证所有产品是否存在，并标准化本地购物车项
+      const normalizedCart: any[] = [];
       for (const item of cartItems) {
         if (!item.productId) {
           return ctx.badRequest('All cart items must have a productId');
@@ -291,44 +293,24 @@ export default factories.createCoreController('api::website-user.website-user', 
         if (!product) {
           return ctx.badRequest(`Product with ID ${item.productId} not found`);
         }
+        const quantity = typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1;
+        normalizedCart.push({
+          productId: item.productId,
+          quantity,
+          addedAt: item.addedAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
       }
 
-      // 合并本地购物车和后端购物车
-      let serverCart = (websiteUser.cart as any[]) || [];
-      const mergedCart = [...(serverCart as any[])];
-
-      cartItems.forEach(localItem => {
-        const existingIndex = mergedCart.findIndex(item => item.productId === localItem.productId);
-        if (existingIndex > -1) {
-          // 使用较新的时间戳或较大的数量
-          const serverItem = mergedCart[existingIndex];
-          const localTime = new Date(localItem.updatedAt || localItem.addedAt);
-          const serverTime = new Date(serverItem.updatedAt || serverItem.addedAt);
-          
-          if (localTime > serverTime) {
-            mergedCart[existingIndex] = {
-              ...localItem,
-              updatedAt: new Date().toISOString()
-            };
-          }
-        } else {
-          mergedCart.push({
-            ...localItem,
-            addedAt: localItem.addedAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
-        }
-      });
-
-      // 更新用户购物车
+      // 完全替换后端购物车为本地状态（与 wishlist 行为一致）
       await strapi.entityService.update('api::website-user.website-user', userInfo.userId, {
-        data: { cart: mergedCart }
+        data: { cart: normalizedCart }
       });
 
       ctx.send({
         success: true,
         message: 'Cart synced successfully',
-        data: mergedCart
+        data: normalizedCart
       });
     } catch (error) {
       console.error('Sync cart error:', error);
