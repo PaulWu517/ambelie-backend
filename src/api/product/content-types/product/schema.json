@@ -91,14 +91,27 @@
     },
     "currencyKeyword": {
       "type": "enumeration",
-      "enum": ["CNY", "USD", "EUR", "GBP", "JPY", "HKD"],
-      "default": "CNY"
+      "default": "CNY",
+      "enum": [
+        "CNY",
+        "USD",
+        "EUR",
+        "GBP",
+        "JPY",
+        "HKD"
+      ]
     },
     "orderItems": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::order-item.order-item",
       "mappedBy": "product"
+    },
+    "vrModelUrl": {
+      "type": "string"
+    },
+    "chineseName": {
+      "type": "string"
     }
   }
 }
