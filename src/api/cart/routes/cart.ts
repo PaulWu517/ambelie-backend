@@ -5,6 +5,7 @@ export default {
       path: '/cart',
       handler: 'cart.getCart',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -14,6 +15,7 @@ export default {
       path: '/cart/add',
       handler: 'cart.addToCart',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -23,6 +25,7 @@ export default {
       path: '/cart/update',
       handler: 'cart.updateCartItem',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -32,6 +35,7 @@ export default {
       path: '/cart/remove/:productId',
       handler: 'cart.removeFromCart',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
@@ -41,6 +45,7 @@ export default {
       path: '/cart/clear',
       handler: 'cart.clearCart',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
