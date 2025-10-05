@@ -23,9 +23,41 @@ export default factories.createCoreController('api::website-user.website-user', 
         return ctx.unauthorized('User not found or inactive');
       }
 
+      const cartItems = (websiteUser.cart as any[]) || [];
+      const detailedItems: any[] = [];
+
+      // 为每个购物车项填充完整产品详情（包含图片与主图）
+      for (const item of cartItems) {
+        if (!item?.productId) continue;
+        try {
+          const product = await strapi.entityService.findOne('api::product.product', item.productId, {
+            populate: {
+              images: true,
+              main_image: { populate: '*' },
+              category: true,
+            },
+          });
+          if (product) {
+            // 与 wishlist/inquiries 返回结构保持一致，附加 quantity 字段
+            detailedItems.push({
+              ...product,
+              quantity: typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1,
+            });
+          }
+        } catch (e) {
+          // 某个产品加载失败时忽略该项，避免影响整体响应
+          strapi.log.warn(`Failed to populate product detail for cart productId=${item.productId}: ${e}`);
+        }
+      }
+
       ctx.send({
         success: true,
-        data: websiteUser.cart || [],
+        data: {
+          // 保留原始结构以兼容现有前端解析
+          cartItems,
+          // 新增已填充的产品详情列表，前端可直接使用以避免二次请求
+          items: detailedItems,
+        },
         user: {
           id: websiteUser.id,
           email: websiteUser.email,
