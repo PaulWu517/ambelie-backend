@@ -112,6 +112,9 @@
         },
         "chineseName": {
             "type": "string"
+        },
+        "vrUsdzUrl": {
+            "type": "string"
         }
     }
 }

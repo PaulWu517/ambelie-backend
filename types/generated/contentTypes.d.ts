@@ -844,6 +844,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     vrModelUrl: Schema.Attribute.String;
+    vrUsdzUrl: Schema.Attribute.String;
   };
 }
 

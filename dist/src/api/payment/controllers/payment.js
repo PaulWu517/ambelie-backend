@@ -321,14 +321,21 @@ exports.default = strapi_1.factories.createCoreController('api::payment.payment'
                 ...(websiteUser && { websiteUserId: websiteUser.id.toString() }),
                 ...(websiteUser && { websiteUserEmail: websiteUser.email }),
             };
+            // 规范化成功/取消回跳地址：优先使用后端环境变量，其次使用前端传入，最后使用默认站点
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://www.ambelie.com';
+            const successBase = process.env.PAYMENT_SUCCESS_URL || successUrl || `${siteUrl}/order/success`;
+            const cancelBase = process.env.PAYMENT_CANCEL_URL || cancelUrl || `${siteUrl}/cart`;
+            // Stripe 要求在 success_url 中使用 {CHECKOUT_SESSION_ID} 以便回跳后识别
+            const successWithParams = `${successBase}${successBase.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}${customerEmail ? `&email=${encodeURIComponent(customerEmail)}` : ''}`;
+            const cancelWithParams = cancelBase;
             strapi.log.info(`创建支付会话，临时订单号: ${tempOrderNumber}`);
             // 创建checkout session
             const session = await (0, stripe_1.createCheckoutSession)({
                 orderItems,
                 customerEmail,
                 customerName,
-                successUrl,
-                cancelUrl,
+                successUrl: successWithParams,
+                cancelUrl: cancelWithParams,
                 metadata: enhancedMetadata,
             });
             return ctx.send({
