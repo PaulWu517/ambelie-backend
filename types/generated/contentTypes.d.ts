@@ -810,6 +810,9 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     description: Schema.Attribute.Text;
     designer: Schema.Attribute.String;
     dimensions: Schema.Attribute.String;
+    fashionImage: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
     hover_image: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
@@ -829,6 +832,9 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       'images' | 'files' | 'videos' | 'audios'
     >;
     materials: Schema.Attribute.String;
+    modelImage: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     orderItems: Schema.Attribute.Relation<
       'oneToMany',

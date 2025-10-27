@@ -115,6 +115,26 @@
         },
         "vrUsdzUrl": {
             "type": "string"
+        },
+        "fashionImage": {
+            "type": "media",
+            "multiple": false,
+            "allowedTypes": [
+                "images",
+                "files",
+                "videos",
+                "audios"
+            ]
+        },
+        "modelImage": {
+            "type": "media",
+            "multiple": false,
+            "allowedTypes": [
+                "images",
+                "files",
+                "videos",
+                "audios"
+            ]
         }
     }
 }
