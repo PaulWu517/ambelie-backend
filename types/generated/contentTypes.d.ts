@@ -813,6 +813,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     fashionImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
+    fashionPrompt: Schema.Attribute.Text;
     hover_image: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
@@ -835,6 +836,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     modelImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
+    modelPrompt: Schema.Attribute.Text;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     orderItems: Schema.Attribute.Relation<
       'oneToMany',

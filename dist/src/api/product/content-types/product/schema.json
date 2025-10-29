@@ -135,6 +135,12 @@
                 "videos",
                 "audios"
             ]
+        },
+        "fashionPrompt": {
+            "type": "text"
+        },
+        "modelPrompt": {
+            "type": "text"
         }
     }
 }
