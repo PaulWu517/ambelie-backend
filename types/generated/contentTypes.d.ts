@@ -845,6 +845,9 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     origin: Schema.Attribute.String;
     period: Schema.Attribute.String;
     price: Schema.Attribute.Decimal;
+    productPDF: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     stockQuantity: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
