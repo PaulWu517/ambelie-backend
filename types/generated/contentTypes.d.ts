@@ -832,6 +832,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     main_image: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
+    Manufacturer: Schema.Attribute.String;
     materials: Schema.Attribute.String;
     modelImage: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'

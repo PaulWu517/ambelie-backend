@@ -151,6 +151,9 @@
                 "videos",
                 "audios"
             ]
+        },
+        "Manufacturer": {
+            "type": "string"
         }
     }
 }
