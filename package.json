@@ -21,6 +21,7 @@
     "@strapi/plugin-users-permissions": "5.14.0",
     "@strapi/provider-email-nodemailer": "^5.23.1",
     "@strapi/provider-email-sendgrid": "^5.20.0",
+    "@strapi/provider-upload-aws-s3": "^5.42.0",
     "@strapi/strapi": "5.14.0",
     "better-sqlite3": "11.3.0",
     "cos-nodejs-sdk-v5": "^2.15.4",

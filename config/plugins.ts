@@ -24,7 +24,7 @@ export default () => {
     upload: {
       config: {
         // 使用官方 AWS S3 插件代理腾讯云 COS
-        provider: 'aws-s3',
+        provider: '@strapi/provider-upload-aws-s3',
         providerOptions: {
           s3Options: {
             credentials: {
