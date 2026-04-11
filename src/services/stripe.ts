@@ -24,6 +24,7 @@ export const createCheckoutSession = async (params: {
   customerName: string;
   successUrl: string;
   cancelUrl: string;
+  currency: string;
   metadata?: Record<string, string>;
 }) => {
   if (!stripe) {
@@ -31,12 +32,12 @@ export const createCheckoutSession = async (params: {
   }
   
   try {
-    const { orderItems, customerEmail, customerName, successUrl, cancelUrl, metadata } = params;
+    const { orderItems, customerEmail, customerName, successUrl, cancelUrl, currency, metadata } = params;
 
     // 构建line_items
     const lineItems = orderItems.map(item => ({
       price_data: {
-        currency: process.env.PAYMENT_CURRENCY || 'USD',
+        currency: currency.toLowerCase(),
         product_data: {
           name: item.productName,
         },

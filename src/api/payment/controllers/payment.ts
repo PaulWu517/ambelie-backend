@@ -316,7 +316,7 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
   // 创建Stripe Checkout会话
   async createCheckoutSession(ctx) {
     try {
-      const { orderItems, customerEmail, customerName, successUrl, cancelUrl, metadata = {} } = ctx.request.body;
+      const { orderItems, customerEmail, customerName, successUrl, cancelUrl, currency = 'GBP', metadata = {} } = ctx.request.body;
 
       if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
         return ctx.badRequest('订单项不能为空');
@@ -367,6 +367,7 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
          customerName,
          successUrl: successWithParams,
          cancelUrl: cancelWithParams,
+         currency: currency,
          metadata: enhancedMetadata,
        });
 
