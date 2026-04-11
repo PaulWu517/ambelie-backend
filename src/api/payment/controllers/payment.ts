@@ -374,7 +374,7 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
          success: true,
          data: {
            id: session.sessionId,
-           url: session.url,
+           clientSecret: session.clientSecret,
          },
        });
     } catch (error) {

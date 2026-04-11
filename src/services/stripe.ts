@@ -45,14 +45,14 @@ export const createCheckoutSession = async (params: {
       quantity: item.quantity,
     }));
 
-    // 创建checkout session
+    // 创建checkout session (Embedded Checkout mode)
     const session = await stripe.checkout.sessions.create({
+      ui_mode: 'embedded',
       // 保留信用卡（Apple Pay/Google Pay 会在满足条件时随卡自动出现）
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      return_url: successUrl, // embedded mode uses return_url instead of success/cancel
       customer_email: customerEmail,
       metadata: {
         customerName,
@@ -111,7 +111,7 @@ export const createCheckoutSession = async (params: {
 
     return {
       sessionId: session.id,
-      url: session.url,
+      clientSecret: session.client_secret,
     };
   } catch (error) {
     strapi.log.error('创建Stripe checkout session失败:', error);
