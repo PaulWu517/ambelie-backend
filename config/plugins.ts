@@ -23,22 +23,26 @@ export default () => {
   return {
     upload: {
       config: {
-        // 使用腾讯云COS进行文件存储
-        provider: 'strapi-provider-upload-tencent-cloud-cos',
+        // 使用官方 AWS S3 插件代理腾讯云 COS
+        provider: 'aws-s3',
         providerOptions: {
-          SecretId: process.env.TENCENT_COS_SECRET_ID,
-          SecretKey: process.env.TENCENT_COS_SECRET_KEY,
-          Bucket: process.env.TENCENT_COS_BUCKET,
-          Region: process.env.TENCENT_COS_REGION,
-          // 访问控制列表
-          ACL: 'public-read',
-          // 存储路径前缀
-          BasePath: 'uploads/',
-          // CDN域名（可选，如果配置了CDN加速）
-          BaseOrigin: BASE_ORIGIN,
+          s3Options: {
+            credentials: {
+              accessKeyId: process.env.TENCENT_COS_SECRET_ID,
+              secretAccessKey: process.env.TENCENT_COS_SECRET_KEY,
+            },
+            region: process.env.TENCENT_COS_REGION,
+            endpoint: `https://cos.${process.env.TENCENT_COS_REGION}.myqcloud.com`, // 腾讯云 COS 的 Endpoint 格式
+            params: {
+              Bucket: process.env.TENCENT_COS_BUCKET,
+            },
+          },
+          baseUrl: BASE_ORIGIN, // CDN 域名，替代默认的 S3 链接
+          rootPath: 'uploads', // 可选：指定存放的子目录
         },
         actionOptions: {
           upload: {},
+          uploadStream: {},
           delete: {},
         },
         sizeLimit: 200 * 1024 * 1024, // 200MB
