@@ -39,7 +39,6 @@ export default () => {
         },
         actionOptions: {
           upload: {},
-          uploadStream: {},
           delete: {},
         },
         sizeLimit: 200 * 1024 * 1024, // 200MB
