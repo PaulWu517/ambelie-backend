@@ -138,11 +138,13 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
       });
 
       // 创建订单项 (Order-items)
+      const emailItemsList = [];
       for (const item of orderItems) {
         try {
           const product = await strapi.entityService.findOne('api::product.product', item.productId);
           
           if (product) {
+            emailItemsList.push({ name: product.name, quantity: item.quantity || 1 });
             const productSnapshot = {
               id: product.id,
               name: product.name || '',
@@ -168,6 +170,76 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
       }
 
       strapi.log.info(`报价订单 ${order.orderNumber} 创建成功`);
+
+      // 尝试发送邮件通知客户和客服
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_DEFAULT_FROM || 'hello@ambelie.com';
+        
+        // 邮件正文（发给客户）
+        const customerEmailHtml = `
+          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+            <h2 style="font-weight: normal; margin-bottom: 20px;">Quote Request Received</h2>
+            <p>Dear ${customerName},</p>
+            <p>Thank you for requesting a delivery quote from Ambelie. We have received your request and our logistics team is now calculating a comprehensive shipping route tailored to your destination.</p>
+            
+            <div style="background-color: #f9f9f9; padding: 20px; margin: 30px 0; border-radius: 4px;">
+              <h3 style="margin-top: 0; font-size: 16px;">Order Details (#${orderNumber})</h3>
+              <p><strong>Shipping To:</strong><br/>
+              ${shippingAddress.line1}<br/>
+              ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}<br/>
+              ${shippingAddress.country}
+              </p>
+              <p><strong>Items Requested:</strong></p>
+              <ul style="padding-left: 20px;">
+                ${emailItemsList.map(item => `<li>${item.name} (x${item.quantity})</li>`).join('')}
+              </ul>
+              <p style="margin-bottom: 0;"><strong>Subtotal:</strong> ${currency} ${subtotal.toLocaleString()}</p>
+            </div>
+            
+            <h3 style="font-size: 16px;">What Happens Next?</h3>
+            <p>A formal quote including shipping fees and any applicable taxes/duties will be sent to this email within 1-3 business days for your review.</p>
+            <p>If you have any questions in the meantime, simply reply to this email.</p>
+            <br/>
+            <p>Warm regards,<br/>The Ambelie Team</p>
+          </div>
+        `;
+
+        // 邮件正文（发给客服）
+        const adminEmailHtml = `
+          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #d32f2f;">New Quote Request: #${orderNumber}</h2>
+            <p>A customer has requested a Full-Service Shipping Quote.</p>
+            
+            <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #d32f2f;">
+              <p><strong>Customer:</strong> ${customerName} (${customerEmail})</p>
+              <p><strong>Phone:</strong> ${customerPhone}</p>
+              <p><strong>Destination:</strong> ${shippingAddress.country}, ${shippingAddress.city}</p>
+              <p><strong>Subtotal:</strong> ${currency} ${subtotal}</p>
+            </div>
+            
+            <p>Please log in to the Strapi Admin Panel to view the full order details and calculate the shipping costs.</p>
+          </div>
+        `;
+
+        // 1. 发送给客户
+        await strapi.plugin('email').service('email').send({
+          to: customerEmail,
+          subject: `Ambelie - Quote Request Received (#${orderNumber})`,
+          html: customerEmailHtml,
+        });
+
+        // 2. 发送给管理员/客服
+        await strapi.plugin('email').service('email').send({
+          to: adminEmail,
+          subject: `[ACTION REQUIRED] New Quote Request - ${orderNumber}`,
+          html: adminEmailHtml,
+        });
+
+        strapi.log.info(`报价订单 ${order.orderNumber} 邮件通知已发送`);
+      } catch (emailError) {
+        strapi.log.error('发送报价订单邮件失败:', emailError);
+        // 邮件发送失败不应该阻塞订单创建流程
+      }
 
       return ctx.send({
         success: true,
