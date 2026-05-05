@@ -72,15 +72,15 @@ export default () => {
         providerOptions: {
           host: process.env.SMTP_HOST,
           port: process.env.SMTP_PORT,
+          secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
           auth: {
-            user: process.env.SMTP_USERNAME,
-            pass: process.env.SMTP_PASSWORD,
+            user: process.env.EMAIL_USER || process.env.SMTP_USER || process.env.SMTP_USERNAME,
+            pass: process.env.EMAIL_PASS || process.env.SMTP_PASSWORD,
           },
-          // ... any custom nodemailer options
         },
         settings: {
-          defaultFrom: process.env.SMTP_DEFAULT_FROM || 'hello@ambelie.com',
-          defaultReplyTo: process.env.SMTP_DEFAULT_REPLY_TO || 'hello@ambelie.com',
+          defaultFrom: process.env.EMAIL_FROM || process.env.SMTP_DEFAULT_FROM || 'hello@ambelie.com',
+          defaultReplyTo: process.env.EMAIL_REPLY_TO || process.env.SMTP_DEFAULT_REPLY_TO || 'hello@ambelie.com',
         },
       },
     },
