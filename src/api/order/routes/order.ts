@@ -91,6 +91,14 @@ export default {
     },
     {
       method: 'POST',
+      path: '/orders/request-quote',
+      handler: 'order.requestQuote',
+      config: {
+        auth: false, // Allow guest users to request quote
+      },
+    },
+    {
+      method: 'POST',
       path: '/orders/:id/refund',
       handler: 'order.requestRefund',
       config: {

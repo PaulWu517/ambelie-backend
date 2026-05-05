@@ -59,12 +59,17 @@ export const createCheckoutSession = async (params: {
         customerName,
         ...metadata,
       },
-      // 确保PaymentIntent也包含相同的metadata
+      // 将用户填写的地址等信息通过 payment_intent_data 记录
       payment_intent_data: {
         metadata: {
           customerName,
           ...metadata,
         },
+      },
+      // 将第一步收集到的地址预填到Stripe表单中
+      // Stripe 会将这些信息展示在支付表单内
+      saved_payment_method_options: {
+        payment_method_save: 'enabled',
       },
       // 开启在结账完成后自动生成发票（Paid Invoice）
       // Stripe 会在支付成功后创建并标记为已支付的发票；
@@ -83,12 +88,6 @@ export const createCheckoutSession = async (params: {
             ? { account_tax_ids: [process.env.ACCOUNT_TAX_ID] }
             : {}),
         },
-      },
-      shipping_address_collection: {
-        allowed_countries: ['US', 'CA', 'GB', 'AU', 'CN', 'HK', 'TW', 'SG', 'JP', 'KR'],
-      },
-      phone_number_collection: {
-        enabled: true,
       },
     });
     

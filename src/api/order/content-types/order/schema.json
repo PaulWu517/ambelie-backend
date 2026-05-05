@@ -21,8 +21,12 @@
       "type": "enumeration",
       "enum": [
         "pending",
+        "quote_requested",
+        "quote_sent",
+        "awaiting_payment",
         "confirmed",
         "paid", 
+        "paid_pickup_pending",
         "processing",
         "shipped",
         "out_for_delivery",

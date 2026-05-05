@@ -84,6 +84,104 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
     }
   },
   
+  // 处理全权运输的报价请求
+  async requestQuote(ctx) {
+    try {
+      const { orderItems, customerEmail, customerName, customerPhone, shippingAddress, currency = 'GBP', shippingOption } = ctx.request.body;
+
+      if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+        return ctx.badRequest('订单项不能为空');
+      }
+
+      // 检查用户认证token
+      let websiteUser = null;
+      const authHeader = ctx.request.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+          const userInfo = await strapi.service('api::website-user.website-user').verifyUserToken(token);
+          if (userInfo) {
+            websiteUser = await strapi.entityService.findOne('api::website-user.website-user', userInfo.userId);
+          }
+        } catch (tokenError) {
+          console.log('Invalid user token, continuing as guest:', tokenError.message);
+        }
+      }
+
+      // 生成订单号
+      const orderNumber = `QUOTE-${Date.now()}`;
+      
+      // 计算总价 (仅商品总价)
+      const subtotal = orderItems.reduce((total, item) => total + (item.unitPrice * item.quantity), 0);
+
+      // 创建订单数据
+      const orderData = {
+        orderNumber,
+        status: 'quote_requested', // 特殊状态，表示等待报价
+        totalAmount: subtotal,
+        subtotal: subtotal,
+        currency: currency.toUpperCase(),
+        customerEmail: customerEmail || '',
+        customerName: customerName || '',
+        customerPhone: customerPhone || '',
+        shippingAddress: shippingAddress || {},
+        billingAddress: shippingAddress || {}, // 暂时复用
+        orderDate: new Date().toISOString(),
+        notes: `Shipping Option: ${shippingOption === 'full_service' ? 'Full-Service Shipping' : shippingOption}`,
+        ...(websiteUser && { customer: websiteUser.id }),
+      };
+      
+      strapi.log.info(`准备创建报价订单: ${orderData.orderNumber}`);
+
+      const order = await strapi.entityService.create('api::order.order', {
+        data: orderData as any,
+      });
+
+      // 创建订单项 (Order-items)
+      for (const item of orderItems) {
+        try {
+          const product = await strapi.entityService.findOne('api::product.product', item.productId);
+          
+          if (product) {
+            const productSnapshot = {
+              id: product.id,
+              name: product.name || '',
+              price: product.price || 0,
+              description: product.description || '',
+              slug: product.slug || '',
+            };
+
+            await strapi.entityService.create('api::order-item.order-item', {
+              data: {
+                quantity: item.quantity || 1,
+                unitPrice: item.unitPrice || product.price || 0,
+                totalPrice: (item.quantity || 1) * (item.unitPrice || product.price || 0),
+                product: item.productId,
+                order: order.id,
+                productSnapshot: productSnapshot,
+              },
+            });
+          }
+        } catch (itemError) {
+          strapi.log.error(`创建订单项失败 - ProductID: ${item.productId}`, itemError);
+        }
+      }
+
+      strapi.log.info(`报价订单 ${order.orderNumber} 创建成功`);
+
+      return ctx.send({
+        success: true,
+        data: {
+          orderNumber,
+          status: 'quote_requested'
+        },
+      });
+    } catch (error) {
+      strapi.log.error('创建报价请求失败:', error);
+      return ctx.internalServerError('创建报价请求失败');
+    }
+  },
+
   // 获取订单详情
   async findOne(ctx) {
     try {
