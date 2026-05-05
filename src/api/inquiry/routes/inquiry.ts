@@ -60,5 +60,15 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/inquiries/enquire-similar',
+      handler: 'inquiry.enquireSimilar',
+      config: {
+        auth: false,
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };
