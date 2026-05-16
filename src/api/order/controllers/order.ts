@@ -177,31 +177,72 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
         
         // 邮件正文（发给客户）
         const customerEmailHtml = `
-          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-            <h2 style="font-weight: normal; margin-bottom: 20px;">Quote Request Received</h2>
-            <p>Dear ${customerName},</p>
-            <p>Thank you for requesting a delivery quote from Ambelie. We have received your request and our logistics team is now calculating a comprehensive shipping route tailored to your destination.</p>
-            
-            <div style="background-color: #f9f9f9; padding: 20px; margin: 30px 0; border-radius: 4px;">
-              <h3 style="margin-top: 0; font-size: 16px;">Order Details (#${orderNumber})</h3>
-              <p><strong>Shipping To:</strong><br/>
-              ${shippingAddress.line1}<br/>
-              ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}<br/>
-              ${shippingAddress.country}
-              </p>
-              <p><strong>Items Requested:</strong></p>
-              <ul style="padding-left: 20px;">
-                ${emailItemsList.map(item => `<li>${item.name} (x${item.quantity})</li>`).join('')}
-              </ul>
-              <p style="margin-bottom: 0;"><strong>Subtotal:</strong> ${currency} ${subtotal.toLocaleString()}</p>
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Quote Request Received - AMBELIE</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+          </head>
+          <body style="font-family: 'Solena-Regular', 'Poppins', 'Arial', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #333; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; font-size: 1.8rem; font-family: 'Solena-Regular', 'Times New Roman', 'Georgia', serif; font-weight: 400; color: #ffffff;">Quote Request Received</h1>
+              <div style="margin: 15px 0 0 0; text-align: center;">
+                <img src="https://www.ambelie.com/assets/vi/Ambelie_whitelogo.png" alt="AMBELIE Logo" style="height: 35px; margin: 0 auto;" />
+              </div>
             </div>
-            
-            <h3 style="font-size: 16px;">What Happens Next?</h3>
-            <p>A formal quote including shipping fees and any applicable taxes/duties will be sent to this email within 1-3 business days for your review.</p>
-            <p>If you have any questions in the meantime, simply reply to this email.</p>
-            <br/>
-            <p>Warm regards,<br/>The Ambelie Team</p>
-          </div>
+
+            <div style="background-color: #fff; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+              <p style="font-size: 1.1rem; margin-bottom: 20px; color: #333;">Dear ${customerName},</p>
+              <p style="color: #333;">Thank you for requesting a delivery quote from Ambelie. We have received your request and our logistics team is now calculating a comprehensive shipping route tailored to your destination.</p>
+              
+              <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #666;">
+                <h3 style="margin: 0 0 15px 0; color: #333; font-family: 'Solena-Regular', 'Times New Roman', 'Georgia', serif; font-weight: 400;">Order Details (#${orderNumber})</h3>
+                <p style="margin-bottom: 5px;"><strong>Shipping To:</strong></p>
+                <p style="margin-top: 0; color: #555;">
+                  ${shippingAddress.line1}<br/>
+                  ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}<br/>
+                  ${shippingAddress.country}
+                </p>
+                <p style="margin-bottom: 5px; margin-top: 15px;"><strong>Items Requested:</strong></p>
+                <ul style="margin-top: 0; padding-left: 20px; color: #555;">
+                  ${emailItemsList.map(item => `<li>${item.name} (x${item.quantity})</li>`).join('')}
+                </ul>
+                <p style="margin-bottom: 0; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;"><strong>Subtotal:</strong> ${currency} ${subtotal.toLocaleString()}</p>
+              </div>
+              
+              <h3 style="color: #333; font-family: 'Solena-Regular', 'Times New Roman', 'Georgia', serif; font-weight: 400;">What Happens Next?</h3>
+              <p style="color: #333;">A formal quote including shipping fees and any applicable taxes/duties will be sent to this email within 1-3 business days for your review.</p>
+              <p style="color: #333;">If you have any questions in the meantime, simply reply to this email.</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://www.ambelie.com/" style="display: inline-block; background-color: #555; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: 500; font-family: 'Poppins', 'Arial', sans-serif;">Visit Our Website</a>
+              </div>
+              
+              <p style="margin-top: 30px; color: #333;">Warm regards,<br><strong>The Ambelie Team</strong></p>
+              
+              <!-- Email Signature -->
+              <div style="margin-top: 30px; padding: 25px; background-color: #f8f8f8; border-radius: 8px;">
+                <div style="margin-bottom: 20px;">
+                  <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <img src="https://www.ambelie.com/assets/vi/Ambelie_VI_Logos.png" alt="AMBELIE Logo" style="height: 40px; margin-right: 15px;" />
+                  </div>
+                  <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: #666; font-family: 'Poppins', 'Arial', sans-serif;">NO.21 KANGPING ROAD</p>
+                  <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: #666; font-family: 'Poppins', 'Arial', sans-serif;">SHANGHAI</p>
+                  <p style="margin: 0; font-size: 0.8rem; color: #666; font-family: 'Poppins', 'Arial', sans-serif;">
+                    <a href="https://www.instagram.com/ambelie_gallery" style="color: #666; text-decoration: underline; font-weight: 500;">@AMBELIE</a>
+                  </p>
+                </div>
+                <div style="border-top: 1px solid #ddd; padding-top: 15px; text-align: center;">
+                  <p style="margin: 0; font-size: 0.85rem; color: #999; font-family: 'Poppins', 'Arial', sans-serif;">This is an automated confirmation email. Please do not reply to this message.</p>
+                  <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #999; font-family: 'Poppins', 'Arial', sans-serif;">© ${new Date().getFullYear()} AMBELIE. All rights reserved.</p>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
         `;
 
         // 邮件正文（发给客服）

@@ -192,6 +192,47 @@ async function handlePaymentSucceeded(paymentIntent, strapi) {
             data: { status: 'paid' },
           });
           strapi.log.info(`订单 ${payment.order.orderNumber} 状态更新为已支付`);
+          
+          // ---- 新增：发送订单成功通知邮件给公司客服 ----
+          try {
+            // 获取订单详情以包含在邮件中
+            const fullOrder = await strapi.entityService.findOne('api::order.order', payment.order.id, {
+              populate: ['orderItems', 'orderItems.product']
+            });
+            
+            const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_DEFAULT_FROM || 'hello@ambelie.com';
+            const customerName = fullOrder.customerName || paymentIntent.metadata?.customerName || 'Customer';
+            const customerEmail = fullOrder.customerEmail || paymentIntent.metadata?.customerEmail || '';
+            const orderNumber = fullOrder.orderNumber;
+            const amount = (paymentIntent.amount_received || 0) / 100;
+            const currency = (paymentIntent.currency || 'USD').toUpperCase();
+            
+            const adminEmailHtml = `
+              <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2e7d32;">New Order Paid: #${orderNumber}</h2>
+                <p>A customer has successfully completed a payment via Stripe.</p>
+                
+                <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #2e7d32;">
+                  <p><strong>Customer:</strong> ${customerName} (${customerEmail})</p>
+                  <p><strong>Total Paid:</strong> ${currency} ${amount.toLocaleString()}</p>
+                  <p><strong>Fulfillment:</strong> Collect in Store (Logistics to be arranged by customer)</p>
+                </div>
+                
+                <p>Please log in to the Strapi Admin Panel to view the full order details and prepare the item(s) for collection.</p>
+              </div>
+            `;
+
+            await strapi.plugin('email').service('email').send({
+              to: adminEmail,
+              subject: `[NEW ORDER] Payment Received - #${orderNumber}`,
+              html: adminEmailHtml,
+            });
+            
+            strapi.log.info(`已成功发送新订单(#${orderNumber})通知邮件给客服: ${adminEmail}`);
+          } catch (emailError) {
+            strapi.log.error(`发送新订单通知邮件失败:`, emailError);
+          }
+          // ---- 结束新增邮件逻辑 ----
         }
       }
     } else {
