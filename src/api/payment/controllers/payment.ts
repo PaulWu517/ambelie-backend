@@ -34,17 +34,22 @@ async function handleCheckoutSessionCompleted(session, strapi) {
       : fullSession.payment_intent?.id;
 
     // 创建订单数据
+    const shippingCost = Math.max(0, Number(fullSession.metadata?.shippingAmount) || 0);
+    const stripeSubtotal = (fullSession.amount_subtotal || 0) / 100;
     const orderData = {
       orderNumber: tempOrderNumber || `ORDER-${Date.now()}`, // 使用临时订单号或生成新的
       status: paymentIntentId ? 'pending' : 'paid', // 有 payment intent 时为 pending，等待支付完成
       totalAmount: (fullSession.amount_total || 0) / 100, // 转换为元
-      subtotal: (fullSession.amount_subtotal || 0) / 100,
+      subtotal: Math.max(0, stripeSubtotal - shippingCost),
+      shippingCost,
       currency: fullSession.currency?.toUpperCase() || 'USD',
       customerEmail: fullSession.customer_details?.email || '',
       customerName: fullSession.customer_details?.name || '',
       customerPhone: fullSession.customer_details?.phone || '',
       shippingAddress: (fullSession as any).shipping_details?.address || fullSession.customer_details?.address || {},
       billingAddress: fullSession.customer_details?.address || {},
+      shippingMethod: fullSession.metadata?.shippingOption === 'confirmed_shipping' ? 'Confirmed Shipping' : 'Collect in Store',
+      notes: `Shipping Option: ${fullSession.metadata?.shippingOption || 'collect'}`,
       orderDate: new Date().toISOString(),
       // 关联Website User（如果存在）
       ...(websiteUser && { customer: websiteUser.id }),
@@ -206,6 +211,13 @@ async function handlePaymentSucceeded(paymentIntent, strapi) {
             const orderNumber = fullOrder.orderNumber;
             const amount = (paymentIntent.amount_received || 0) / 100;
             const currency = (paymentIntent.currency || 'USD').toUpperCase();
+            const hasConfirmedShipping = paymentIntent.metadata?.shippingOption === 'confirmed_shipping';
+            const fulfillment = hasConfirmedShipping
+              ? 'Confirmed Shipping (paid with order)'
+              : 'Collect in Store (logistics to be arranged by customer)';
+            const nextStep = hasConfirmedShipping
+              ? 'Please prepare the item(s) for the confirmed delivery arrangement.'
+              : 'Please prepare the item(s) for collection.';
             
             const adminEmailHtml = `
               <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
@@ -215,10 +227,10 @@ async function handlePaymentSucceeded(paymentIntent, strapi) {
                 <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #2e7d32;">
                   <p><strong>Customer:</strong> ${customerName} (${customerEmail})</p>
                   <p><strong>Total Paid:</strong> ${currency} ${amount.toLocaleString()}</p>
-                  <p><strong>Fulfillment:</strong> Collect in Store (Logistics to be arranged by customer)</p>
+                  <p><strong>Fulfillment:</strong> ${fulfillment}</p>
                 </div>
                 
-                <p>Please log in to the Strapi Admin Panel to view the full order details and prepare the item(s) for collection.</p>
+                <p>Please log in to the Strapi Admin Panel to view the full order details. ${nextStep}</p>
               </div>
             `;
 
@@ -357,7 +369,7 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
   // 创建Stripe Checkout会话
   async createCheckoutSession(ctx) {
     try {
-      const { orderItems, customerEmail, customerName, successUrl, cancelUrl, currency = 'GBP', metadata = {} } = ctx.request.body;
+      const { orderItems, customerEmail, customerName, successUrl, cancelUrl, currency = 'GBP', shippingAmount = 0, metadata = {} } = ctx.request.body;
 
       if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
         return ctx.badRequest('订单项不能为空');
@@ -380,11 +392,13 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
 
       // 生成临时订单号用于跟踪
       const tempOrderNumber = `TEMP-ORDER-${Date.now()}`;
+      const normalizedShippingAmount = Math.max(0, Number(shippingAmount) || 0);
       
       // 构建元数据，包含用户信息和订单号
       const enhancedMetadata = {
         ...metadata,
         items: JSON.stringify(orderItems),
+        shippingAmount: normalizedShippingAmount.toString(),
         tempOrderNumber: tempOrderNumber, // 添加临时订单号
         // 如果有登录用户，保存用户ID
         ...(websiteUser && { websiteUserId: websiteUser.id.toString() }),
@@ -409,6 +423,7 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
          successUrl: successWithParams,
          cancelUrl: cancelWithParams,
          currency: currency,
+         shippingAmount: normalizedShippingAmount,
          metadata: enhancedMetadata,
        });
 

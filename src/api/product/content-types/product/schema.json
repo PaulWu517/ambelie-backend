@@ -74,6 +74,10 @@
     "price": {
       "type": "decimal"
     },
+    "shippingFee": {
+      "type": "decimal",
+      "min": 0
+    },
     "inStock": {
       "type": "boolean",
       "default": true

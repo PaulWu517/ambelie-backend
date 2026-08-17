@@ -25,6 +25,7 @@ export const createCheckoutSession = async (params: {
   successUrl: string;
   cancelUrl: string;
   currency: string;
+  shippingAmount?: number;
   metadata?: Record<string, string>;
 }) => {
   if (!stripe) {
@@ -32,7 +33,7 @@ export const createCheckoutSession = async (params: {
   }
   
   try {
-    const { orderItems, customerEmail, customerName, successUrl, cancelUrl, currency, metadata } = params;
+    const { orderItems, customerEmail, customerName, successUrl, cancelUrl, currency, shippingAmount = 0, metadata } = params;
 
     // 构建line_items
     const lineItems = orderItems.map(item => ({
@@ -45,6 +46,19 @@ export const createCheckoutSession = async (params: {
       },
       quantity: item.quantity,
     }));
+
+    if (shippingAmount > 0) {
+      lineItems.push({
+        price_data: {
+          currency: currency.toLowerCase(),
+          product_data: {
+            name: 'Shipping',
+          },
+          unit_amount: Math.round(shippingAmount * 100),
+        },
+        quantity: 1,
+      });
+    }
 
     // 创建checkout session (Embedded Checkout mode)
     const session = await stripe.checkout.sessions.create({
